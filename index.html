@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>홈루덴스 업무지원 포털</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!--
+  폰 홈화면에 깔리는 앱 껍데기.
+
+  ── 왜 이런 것이 필요한가
+  포털 자체는 Apps Script 웹 앱이고, 구글은 그것을 구글 페이지 안의 액자에
+  넣어서 보여준다. 바깥 껍데기가 구글 것이라 우리가 아이콘도 이름도 붙일 수
+  없다. 그래서 우리 주소에 껍데기를 하나 두고 그 안에 포털을 넣는다.
+  아이콘·이름·주소창 없는 화면은 전부 이 파일이 만든다.
+
+  ── 이 파일에 진짜 내용은 없다
+  화면에 보이는 것은 전부 액자 안 포털이 그린다. 여기에 문구를 적기 시작하면
+  포털과 껍데기 두 곳을 같이 고쳐야 하고, 언젠가 둘이 어긋난다.
+
+  ── https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec
+  포털 주소는 여기 박아 두지 않는다. `tools/build_pwa.sh` 가 배포할 때
+  채워 넣는다. 링크만 있으면 열리는 주소라 저장소에 두지 않기로 했다.
+-->
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f7f5f3">
+
+<!-- 아이폰은 manifest 를 안 본다. 아래 셋이 아이폰 몫이다. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="업무지원 포털">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #f7f5f3;
+    /* 노치·홈바에 화면이 가리지 않게 한다. */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+    box-sizing: border-box;
+    overscroll-behavior: none;
+  }
+  iframe { display: block; border: 0; width: 100%; height: 100%; }
+
+  /*
+    포털이 뜨기 전 잠깐 보이는 화면. 흰 판만 있으면 앱이 멈춘 줄 안다.
+    액자가 뜨면 위에 덮이므로 따로 지우지 않는다.
+  */
+  #wait {
+    position: fixed; inset: 0; display: grid; place-items: center;
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    color: #7b7166; background: #f7f5f3;
+  }
+  #wait img { width: 64px; height: 64px; margin-bottom: 14px; }
+  #wait div { text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="wait"><div><img src="icon-192.png" alt=""><br>포털을 여는 중…</div></div>
+<iframe id="portal" title="홈루덴스 업무지원 포털"
+        allow="clipboard-write; downloads"></iframe>
+
+<script>
+/*
+ * 주소에 붙어 온 것을 그대로 포털에 넘긴다.
+ *
+ * 로그인 메일의 링크가 이 껍데기로 온다(`?login=…`). 그것을 안쪽 포털에
+ * 그대로 넘겨야 로그인이 앱 안에서 끝난다. 넘기지 않으면 앱은 영영
+ * 로그인 화면만 보여준다.
+ *
+ * 넘기고 나서 껍데기 주소에서는 지운다. 홈화면 아이콘은 이 주소를 기억하는데,
+ * 일회용 로그인 토큰이 거기 남아 있으면 다음에 열 때마다 이미 써 버린 토큰으로
+ * 로그인을 시도하게 된다.
+ */
+(function () {
+  var EXEC = 'https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec';
+  var q = location.search || '';
+
+  document.getElementById('portal').src = EXEC + q;
+
+  if (q) {
+    history.replaceState(null, '', location.pathname);
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function () {
+      /* 안 되면 앱으로 깔리지 않을 뿐, 포털은 그대로 열린다. */
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
