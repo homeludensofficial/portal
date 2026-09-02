@@ -8,7 +8,7 @@
  * 되고, 그건 안 보이는 것보다 나쁘다. 껍데기(아이콘·틀)만 담아 두어서 신호가
  * 약할 때도 앱이 흰 화면 대신 무언가를 띄우게 한다.
  */
-const SHELL = 'homeludens-shell-v1';
+const SHELL = 'homeludens-shell-v2';
 const FILES = [
   './',
   './index.html',
@@ -34,9 +34,17 @@ self.addEventListener('fetch', e => {
   // 우리 껍데기 파일만 본다. 포털(script.google.com)은 손대지 않는다.
   if (new URL(e.request.url).origin !== self.location.origin) return;
 
-  // 먼저 새로 받아 보고, 안 되면 담아 둔 것을 준다.
+  /*
+   * 먼저 새로 받아 보고, 안 되면 담아 둔 것을 준다.
+   *
+   * 화면을 여는 요청은 브라우저 캐시까지 건너뛰고 받는다. GitHub Pages 가
+   * 「10분간 그대로 써도 된다」 고 알려주기 때문에, 그냥 두면 껍데기를 고쳐
+   * 올려도 한동안 옛 화면이 나온다. 실제로 그렇게 한 번 속았다.
+   */
+  const fresh = e.request.mode === 'navigate' ? { cache: 'reload' } : undefined;
+
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, fresh)
       .then(res => {
         const copy = res.clone();
         caches.open(SHELL).then(c => c.put(e.request, copy)).catch(() => {});
