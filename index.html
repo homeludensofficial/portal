@@ -18,7 +18,7 @@
   화면에 보이는 것은 전부 액자 안 포털이 그린다. 여기에 문구를 적기 시작하면
   포털과 껍데기 두 곳을 같이 고쳐야 하고, 언젠가 둘이 어긋난다.
 
-  ── https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec
+  ── https://script.google.com/macros/s/AKfycbwA28DNzq1Kmk14UYPFGFDbiod2abOTQi2FYnnUlD-muinXEQHSwajHP-L32yS5j3-4Gg/exec
   포털 주소는 여기 박아 두지 않는다. `tools/build_pwa.sh` 가 배포할 때
   채워 넣는다. 링크만 있으면 열리는 주소라 저장소에 두지 않기로 했다.
 -->
@@ -47,7 +47,10 @@
 
   /*
     포털이 뜨기 전 잠깐 보이는 화면. 흰 판만 있으면 앱이 멈춘 줄 안다.
-    액자가 뜨면 위에 덮이므로 따로 지우지 않는다.
+
+    반드시 걷어내야 한다. position:fixed 는 액자보다 위에 그려지므로,
+    두면 포털이 다 떴는데도 이 화면이 덮은 채로 남는다. 처음에 그렇게
+    두었다가 「여는 중」 에서 멈춘 앱이 되었다.
   */
   #wait {
     position: fixed; inset: 0; display: grid; place-items: center;
@@ -56,6 +59,8 @@
   }
   #wait img { width: 64px; height: 64px; margin-bottom: 14px; }
   #wait div { text-align: center; }
+  /* display:grid 가 브라우저의 hidden 처리를 이기므로 직접 적어 준다. */
+  #wait[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -77,10 +82,25 @@
  * 로그인을 시도하게 된다.
  */
 (function () {
-  var EXEC = 'https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec';
+  var EXEC = 'https://script.google.com/macros/s/AKfycbwA28DNzq1Kmk14UYPFGFDbiod2abOTQi2FYnnUlD-muinXEQHSwajHP-L32yS5j3-4Gg/exec';
   var q = location.search || '';
+  var frame = document.getElementById('portal');
+  var wait = document.getElementById('wait');
 
-  document.getElementById('portal').src = EXEC + q;
+  // 액자가 다 뜨면 기다림 화면을 걷는다. 남의 페이지라 안을 들여다볼 수는
+  // 없지만, 다 불러왔다는 것은 알 수 있다.
+  frame.addEventListener('load', function () { wait.hidden = true; });
+
+  // 액자가 끝내 안 뜨는 경우(신호가 끊겼거나 구글이 막았거나)에도 기다림
+  // 화면을 걷는다. 「여는 중…」 이 영영 떠 있으면 무엇이 잘못됐는지조차
+  // 알 수 없다. 대신 무슨 일인지 적어 준다.
+  setTimeout(function () {
+    if (wait.hidden) return;
+    wait.querySelector('div').innerHTML =
+      '포털을 열지 못했습니다.<br>신호를 확인하고 다시 열어 주세요.';
+  }, 20000);
+
+  frame.src = EXEC + q;
 
   if (q) {
     history.replaceState(null, '', location.pathname);
