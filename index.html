@@ -24,19 +24,25 @@
 -->
 
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f7f5f3">
+<!--
+  위아래 안전영역(노치·홈바)에 깔리는 색. 포털이 어두운 화면일 때 여기가
+  밝으면 앱 위아래에 흰 띠가 남는다. 포털의 배경색과 같은 값을 쓴다.
+-->
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f5f3">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#211f1c">
 
 <!-- 아이폰은 manifest 를 안 본다. 아래 셋이 아이폰 몫이다. -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="업무지원 포털">
-<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="icon" href="icon-192.png">
 
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%;
-    background: #f7f5f3;
+    background: #f7f5f3;   /* 포털의 --bg 와 같은 값 */
     /* 노치·홈바에 화면이 가리지 않게 한다. */
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
              env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -61,6 +67,13 @@
   #wait div { text-align: center; }
   /* display:grid 가 브라우저의 hidden 처리를 이기므로 직접 적어 준다. */
   #wait[hidden] { display: none; }
+
+  /* 어두운 화면일 때. 값은 포털 Style.html 의 다크 모드 --bg 와 같다. */
+  @media (prefers-color-scheme: dark) {
+    html, body { background: #211f1c; }
+    #wait { background: #211f1c; color: #a69a8f; }
+    #wait img { filter: invert(1); }
+  }
 </style>
 </head>
 <body>

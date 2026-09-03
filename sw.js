@@ -8,14 +8,15 @@
  * 되고, 그건 안 보이는 것보다 나쁘다. 껍데기(아이콘·틀)만 담아 두어서 신호가
  * 약할 때도 앱이 흰 화면 대신 무언가를 띄우게 한다.
  */
-const SHELL = 'homeludens-shell-v2';
+const SHELL = 'homeludens-shell-v3';
 const FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
-  './icon-180.png'
+  './icon-180.png',
+  './icon-152.png'
 ];
 
 self.addEventListener('install', e => {
