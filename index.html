@@ -63,6 +63,11 @@
     font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
     color: #7b7166; background: #f7f5f3;
   }
+  /*
+   * 배경이 투명한 심볼을 쓴다(symbol-mono.png). 흰 배경이 있는 아이콘을 아래
+   * 어두운 모드에서 반전시키면 배경이 순검정이 되어, 따뜻한 바탕 위에 검은
+   * 네모가 뜬다 — 로고 둘레에 그림자가 낀 것처럼 보인다.
+   */
   #wait img { width: 64px; height: 64px; margin-bottom: 14px; }
   #wait div { text-align: center; }
   /* display:grid 가 브라우저의 hidden 처리를 이기므로 직접 적어 준다. */
@@ -78,7 +83,7 @@
 </head>
 <body>
 
-<div id="wait"><div><img src="icon-192.png" alt=""><br>포털을 여는 중…</div></div>
+<div id="wait"><div><img src="symbol-mono.png" alt=""><br>포털을 여는 중…</div></div>
 <iframe id="portal" title="홈루덴스 업무지원 포털"
         allow="clipboard-write; downloads"></iframe>
 
