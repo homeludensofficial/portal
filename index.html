@@ -18,7 +18,7 @@
   화면에 보이는 것은 전부 액자 안 포털이 그린다. 여기에 문구를 적기 시작하면
   포털과 껍데기 두 곳을 같이 고쳐야 하고, 언젠가 둘이 어긋난다.
 
-  ── https://script.google.com/macros/s/AKfycbwA28DNzq1Kmk14UYPFGFDbiod2abOTQi2FYnnUlD-muinXEQHSwajHP-L32yS5j3-4Gg/exec
+  ── https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec
   포털 주소는 여기 박아 두지 않는다. `tools/build_pwa.sh` 가 배포할 때
   채워 넣는다. 링크만 있으면 열리는 주소라 저장소에 두지 않기로 했다.
 -->
@@ -95,7 +95,7 @@
  * 로그인을 시도하게 된다.
  */
 (function () {
-  var EXEC = 'https://script.google.com/macros/s/AKfycbwA28DNzq1Kmk14UYPFGFDbiod2abOTQi2FYnnUlD-muinXEQHSwajHP-L32yS5j3-4Gg/exec';
+  var EXEC = 'https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec';
   var q = location.search || '';
   var frame = document.getElementById('portal');
   var wait = document.getElementById('wait');
@@ -113,7 +113,15 @@
       '포털을 열지 못했습니다.<br>신호를 확인하고 다시 열어 주세요.';
   }, 20000);
 
-  frame.src = EXEC + q;
+  /*
+   * 껍데기 안이라는 표시. 포털은 이것을 보고 「이 주소를 즐겨찾기에 추가하세요」
+   * 안내를 감춘다 — 앱에서는 틀린 안내이고(즐겨찾기할 주소는 껍데기 쪽이다),
+   * 그 안내가 세션 토큰을 화면에 찍는다.
+   *
+   * 이 표시로는 아무 권한도 주지 않는다. 남이 흉내내도 안내 한 줄이 안 보일
+   * 뿐이다. 권한을 이런 값에 걸면 안 된다.
+   */
+  frame.src = EXEC + (q ? q + '&app=1' : '?app=1');
 
   if (q) {
     history.replaceState(null, '', location.pathname);
