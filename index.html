@@ -132,7 +132,40 @@
    * 이 표시로는 아무 권한도 주지 않는다. 남이 흉내내도 안내 한 줄이 안 보일
    * 뿐이다. 권한을 이런 값에 걸면 안 된다.
    */
-  frame.src = EXEC + (q ? q + '&app=1' : '?app=1');
+  /*
+   * 로그인을 기억한다.
+   *
+   * 세션은 30일짜리인데 껍데기가 그것을 들고 있지 않아서, 앱을 열 때마다
+   * 로그인 화면이 나왔다. 포털 쪽에 맡길 수가 없다 — 구글이 포털을 매번
+   * 다른 하위 도메인에 띄워서 거기 저장한 것은 다음에 사라진다. 껍데기
+   * 주소는 고정이라 여기서는 남는다.
+   *
+   * 주소로 들어온 값(로그인 링크)이 있으면 그쪽이 먼저다. 방금 누른 것이
+   * 들고 있던 것보다 새롭다.
+   */
+  var KEY = 'homeludens.session';
+  var saved = '';
+  try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
+
+  var qs = q;
+  if (!qs && saved) qs = '?s=' + encodeURIComponent(saved);
+  frame.src = EXEC + (qs ? qs + '&app=1' : '?app=1');
+
+  /*
+   * 포털이 로그인 상태를 알려 준다. 빈 값이면 그 세션이 죽었다는 뜻이라 지운다.
+   *
+   * 보낸 곳이 우리 포털인지 확인한다 — 액자 안에 다른 페이지가 들어와
+   * 아무 값이나 넣어 두는 일을 막는다.
+   */
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== new URL(EXEC).origin) return;
+    var d = ev.data;
+    if (!d || d.type !== 'homeludens-session') return;
+    try {
+      if (d.token) localStorage.setItem(KEY, d.token);
+      else localStorage.removeItem(KEY);
+    } catch (e) {}
+  });
 
   if (q) {
     history.replaceState(null, '', location.pathname);
