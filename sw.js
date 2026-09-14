@@ -8,15 +8,15 @@
  * 되고, 그건 안 보이는 것보다 나쁘다. 껍데기(아이콘·틀)만 담아 두어서 신호가
  * 약할 때도 앱이 흰 화면 대신 무언가를 띄우게 한다.
  */
-const SHELL = 'homeludens-shell-v6';
+const SHELL = 'homeludens-shell-v7';
 const FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icon-192-v3.png',
-  './icon-512-v3.png',
-  './icon-180-v3.png',
-  './icon-152-v3.png',
+  './icon-192-v4.png',
+  './icon-512-v4.png',
+  './icon-180-v4.png',
+  './icon-152-v4.png',
   './symbol-mono.png'
 ];
 
