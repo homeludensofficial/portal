@@ -1074,11 +1074,39 @@ body.about-wide .wrap { max-width: none; padding-left: 0; padding-right: 0; }
 .ab-hero-t { font-size: clamp(32px, 6.2vw, 62px); line-height: 1.22; letter-spacing: -.025em;
              font-weight: 700; margin: 0; color: #fff; }
 .ab-hero-s { font-size: clamp(15px, 2.1vw, 20px); color: var(--ab-dim); margin: 18px 0 0; }
-.ab-hero-cue { width: 1px; height: 52px; margin-top: 42px;
-               background: linear-gradient(var(--ab-accent), transparent);
-               animation: ab-cue 2.4s ease-in-out infinite; }
-@keyframes ab-cue { 0%, 100% { opacity: .3; transform: translateY(0); }
-                    50% { opacity: 1; transform: translateY(8px); } }
+/*
+ * 아래로 내려가라는 표시. 가는 세로선 하나였는데, 어두운 사진 위에서는
+ * 화면 긁힌 자국처럼 보이고 누를 수 있다는 것도 알 수 없었다.
+ *
+ * 동그라미 안의 화살표로 바꾼다. 원은 어떤 사진 위에 얹혀도 형태가 남고,
+ * 화살표는 방향을 말한다. 그리고 실제로 눌리는 단추다.
+ */
+.ab-cue {
+  display: inline-flex; align-items: center; gap: 12px;
+  margin-top: 40px; padding: 0; border: 0; background: none;
+  color: var(--ab-dim); cursor: pointer; font: inherit;
+  animation: ab-cue 2.6s ease-in-out infinite;
+}
+.ab-cue-ring {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  border: 1px solid rgba(243, 239, 233, .35);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color .3s, background-color .3s, transform .3s;
+}
+/* 화살촉은 정사각형의 두 변만 남기고 45도 돌린 것이다. 글꼴이 무엇이든,
+   글자가 아니라 도형이라 어디서나 같은 모양으로 나온다. */
+.ab-cue-ring i {
+  width: 8px; height: 8px; margin-top: -3px;
+  border-right: 1.5px solid var(--ab-accent);
+  border-bottom: 1.5px solid var(--ab-accent);
+  transform: rotate(45deg);
+}
+.ab-cue-label { font-size: 11px; font-weight: 700; letter-spacing: .22em; }
+.ab-cue:hover .ab-cue-ring { border-color: var(--ab-accent);
+                             background: rgba(236, 184, 92, .12); transform: translateY(3px); }
+.ab-cue:focus-visible { outline: 2px solid var(--ab-accent); outline-offset: 6px; border-radius: 999px; }
+@keyframes ab-cue { 0%, 100% { transform: translateY(0); opacity: .75; }
+                    50% { transform: translateY(7px); opacity: 1; } }
 
 /* ── 묶음 ───────────────────────────────────────────── */
 .ab-sec { padding-block: 108px; }
@@ -1215,7 +1243,7 @@ a.ab-place:hover { border-color: var(--ab-accent); transform: translateY(-3px); 
 @media (prefers-reduced-motion: reduce) {
   .ab-up, .ab-w i { opacity: 1; transform: none; transition: none; }
   .ab-band-img { clip-path: none; transition: none; }
-  .ab-hero-cue { animation: none; }
+  .ab-cue { animation: none; }
 }
 
 @media (max-width: 760px) {
@@ -1480,7 +1508,18 @@ function renderAbout(items) {
         ? '<h1 class="ab-hero-t ab-split">' + abEsc(head.title) + '</h1>' +
           '<p class="ab-hero-s">' + abEsc(head.body) + '</p>'
         : '') +
-      '<div class="ab-hero-cue" aria-hidden="true"></div>' +
+      /*
+       * 아래로 내려가라는 표시.
+       *
+       * 장식이 아니라 단추다. 누르면 실제로 다음 자리로 내려간다 — 화면이
+       * 길어서 「여기가 끝인가」 하고 닫아 버리는 것이 이 화면에서 가장
+       * 아까운 이탈이고, 표시만 그려 두고 눌리지 않으면 오히려 한 번 속인다.
+       */
+      '<button class="ab-cue" type="button" onclick="abScrollNext()" ' +
+      'aria-label="아래로 내려가기">' +
+        '<span class="ab-cue-ring"><i></i></span>' +
+        '<span class="ab-cue-label">SCROLL</span>' +
+      '</button>' +
     '</div>';
 
   /*
@@ -1614,6 +1653,19 @@ function renderAbout(items) {
     (info.lead ? '<p class="ab-info-c">' + abEsc(info.lead) + '</p>' : '');
 
   abSplitWords();
+}
+
+/*
+ * 머리말 다음 자리로 내려간다.
+ *
+ * 높이를 숫자로 적지 않고 실제 요소를 찾아 간다 — 히어로 높이(92vh)를 적어
+ * 두면 창 크기나 섹션이 바뀔 때마다 엉뚱한 데 선다.
+ */
+function abScrollNext() {
+  var hero = document.getElementById('ab-hero');
+  var next = hero && hero.nextElementSibling;
+  while (next && next.offsetParent === null) next = next.nextElementSibling;
+  if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /** 01·02… 두 자리로 맞춘다. 한 자리와 두 자리가 섞이면 줄이 흔들린다. */
