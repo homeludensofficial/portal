@@ -1084,13 +1084,15 @@ body.about-wide .wrap { max-width: none; padding-left: 0; padding-right: 0; }
  * 문장이 뒤로 밀린다.
  */
 .ab-cue {
-  display: inline-flex; align-items: center; gap: 12px;
+  display: inline-flex; align-items: center; gap: 10px;
   margin-top: 40px; padding: 0; border: 0; background: none;
   color: var(--ab-dim); cursor: pointer; font: inherit;
   animation: ab-cue 2.6s ease-in-out infinite;
 }
+/* 원은 SCROLL 글자와 같은 키로 맞춘다. 크게 두면 표시가 아니라 단추가
+   되어 버려서, 첫 화면에서 문장보다 먼저 눈에 들어온다. */
 .ab-cue-ring {
-  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  width: 20px; height: 20px; border-radius: 50%; flex: none;
   border: 1px solid rgba(243, 239, 233, .35);
   display: inline-flex; align-items: center; justify-content: center;
   transition: border-color .3s, background-color .3s, transform .3s;
@@ -1098,9 +1100,9 @@ body.about-wide .wrap { max-width: none; padding-left: 0; padding-right: 0; }
 /* 화살촉은 정사각형의 두 변만 남기고 45도 돌린 것이다. 글꼴이 무엇이든,
    글자가 아니라 도형이라 어디서나 같은 모양으로 나온다. */
 .ab-cue-ring i {
-  width: 8px; height: 8px; margin-top: -3px;
-  border-right: 1.5px solid var(--ab-accent);
-  border-bottom: 1.5px solid var(--ab-accent);
+  width: 5px; height: 5px; margin-top: -2px;
+  border-right: 1.2px solid var(--ab-accent);
+  border-bottom: 1.2px solid var(--ab-accent);
   transform: rotate(45deg);
 }
 .ab-cue-label { font-size: 11px; font-weight: 700; letter-spacing: .22em; }
