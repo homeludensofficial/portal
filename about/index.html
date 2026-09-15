@@ -1137,41 +1137,37 @@ body.about-wide .wrap { max-width: none; padding-left: 0; padding-right: 0; }
 
 /* ── 이름 ──────────────────────────────────────────── */
 /*
- * 이름 한 줄(작게) · 영문 한 줄(크게) · 한글 한 줄(작게).
- *
- * 사진은 큰 영문 줄의 낱말 사이에만 들어간다. 사진을 글자와 **같은 줄에 같은
- * 키로** 세우는 것이 이 자리의 전부다 — 사진이 문단 밖에 따로 놓이는 순간
- * 그냥 삽화가 되고, 글자 사이에 서 있으면 문장의 일부로 읽힌다.
+ * 줄을 손으로 짠 자리다(About.html 의 renderAbout). 줄마다 낱말과 사진이
+ * 가로로 늘어서고, **사진이 그 줄의 남는 폭을 먹으며 늘어난다** — 그래서
+ * 어느 줄이든 왼쪽 끝에서 오른쪽 끝까지 꽉 찬다. 사진을 고정 폭으로 두면
+ * 줄마다 오른쪽이 들쭉날쭉해지고, 그 순간 이 짜임이 무너진다.
  *
  * 모서리를 둥글리지 않는다. 각진 네모라야 글자와 같은 재질로 보이고,
  * 둥글리면 사진만 따로 떠서 스티커처럼 얹힌다.
  */
-.ab-name { text-align: center; }
-.ab-name-mark {
-  font-size: 12px; font-weight: 700; letter-spacing: .3em;
-  color: var(--ab-dim); margin: 0 0 26px;
-}
+.ab-name { text-align: center; max-width: 1040px; }
 .ab-name-line {
-  font-size: clamp(30px, 6vw, 62px); font-weight: 700;
-  letter-spacing: -.03em; line-height: 1.18; margin: 0 auto;
-  max-width: 16ch; color: #fff;
+  font-size: clamp(26px, 5.6vw, 66px); font-weight: 700;
+  letter-spacing: -.03em; line-height: 1.16; margin: 0; color: #fff;
 }
+.ab-nrow { display: flex; align-items: center; justify-content: center;
+           gap: .16em; flex-wrap: wrap; }
 .ab-name-sub {
   font-size: clamp(14px, 1.8vw, 17px); font-weight: 400; letter-spacing: 0;
-  color: var(--ab-dim); margin: 28px auto 0;
+  color: var(--ab-dim); margin: 30px auto 0;
 }
-/* 높이를 글자 크기로 잡아야 줄 간격이 사진 때문에 벌어지지 않는다. */
+/* 높이를 글자 크기로 잡아야 줄 간격이 사진 때문에 벌어지지 않는다.
+   flex 로 남는 폭을 먹되, 좁은 화면에서 실오라기가 되지 않게 바닥을 둔다. */
 .ab-tile {
-  display: inline-block; vertical-align: middle;
-  width: 2.1em; height: .92em;
+  flex: 1 1 2em; min-width: 1.8em; height: .92em;
   overflow: hidden; background: var(--ab-bg2);
-  transform: scaleX(.15); opacity: 0;
-  transition: transform .8s cubic-bezier(.22,.61,.36,1) var(--d, 0ms),
+  transform: scaleX(.12); transform-origin: 0 50%; opacity: 0;
+  transition: transform .85s cubic-bezier(.22,.61,.36,1) var(--d, 0ms),
               opacity .5s ease var(--d, 0ms);
 }
 .ab-tile.on { transform: none; opacity: 1; }
-/* 흑백으로 눕힌다 — 색이 남아 있으면 사진 셋이 서로 다투고, 글자보다 먼저
-   눈에 들어와서 문장이 안 읽힌다. 어두운 바탕이라 밝기를 조금 올린다. */
+/* 흑백으로 눕힌다 — 색이 남아 있으면 사진끼리 다투고, 글자보다 먼저 눈에
+   들어와서 문장이 안 읽힌다. 어두운 바탕이라 밝기를 조금 올린다. */
 .ab-tile img { width: 100%; height: 100%; object-fit: cover; display: block;
                filter: grayscale(1) brightness(1.18) contrast(1.02); }
 
@@ -1203,8 +1199,15 @@ body.about-wide .wrap { max-width: none; padding-left: 0; padding-right: 0; }
                     width: 15px; height: 15px; border-radius: 50%;
                     background: var(--ab-bg); border: 2px solid var(--ab-line); }
 /* 올해 칸만 채워서 표시한다. 「지금 어디까지 왔나」 가 연혁의 마지막 문장이다. */
+/* 올해 칸만 채워서 표시하고, 거기서만 파문이 퍼진다. 연혁을 내려읽다가
+   「지금 여기」 에서 눈이 한 번 멈추게 하는 것이 이 점 하나의 일이다. */
 .ab-t-now::before { background: var(--ab-accent); border-color: var(--ab-accent);
-                    box-shadow: 0 0 0 6px rgba(236, 184, 92, .14); }
+                    animation: ab-pulse 2.6s ease-out infinite; }
+@keyframes ab-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(236, 184, 92, .5); }
+  70%  { box-shadow: 0 0 0 14px rgba(236, 184, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(236, 184, 92, 0); }
+}
 .ab-t-year { font-size: 15px; font-weight: 700; letter-spacing: .02em; color: var(--ab-accent); }
 .ab-t-tag { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 700;
             letter-spacing: .14em; color: var(--ab-dim); }
@@ -1277,7 +1280,7 @@ a.ab-place:hover { border-color: var(--ab-accent); transform: translateY(-3px); 
 @media (prefers-reduced-motion: reduce) {
   .ab-up, .ab-w i { opacity: 1; transform: none; transition: none; }
   .ab-band-img { clip-path: none; transition: none; }
-  .ab-cue { animation: none; }
+  .ab-cue, .ab-t-now::before { animation: none; }
   .ab-tile { opacity: 1; transform: none; transition: none; }
 }
 
@@ -1570,34 +1573,42 @@ function renderAbout(items) {
   var nameBox = document.getElementById('ab-name');
   if (name) {
     /*
-     * 이름 한 줄(작게) · 영문 한 줄(크게) · 한글 한 줄(작게).
+     * 줄을 손으로 짠다. 본문의 줄바꿈이 화면의 줄바꿈이고 `[]` 가 사진 자리다.
+     * 마지막 줄은 아래에 작게 깔리는 한글이다.
      *
-     * 사진은 영문 줄의 낱말 사이에만 들어간다. 큰 글씨 옆에도 세워 봤는데
-     * 큰 덩어리가 둘이 되면서 어느 쪽을 먼저 읽어야 할지 알 수 없었다.
+     * 자동으로 흘려보내지 않는 이유는, 낱말과 사진이 어디서 끊기느냐가 이
+     * 자리의 생김새 전부이기 때문이다. 맡겨 두면 창 폭에 따라 매번 다른
+     * 그림이 나온다.
      *
      * 낱말마다 span 을 직접 만든다. abSplitWords 에 맡기면 사이에 끼운 사진을
      * 지우면서 다시 쓴다 — 실제로 그렇게 한 번 사라졌다.
      */
     var shots = abGroup(items, '사진-이름').rows;
-    var lines = String(name.body || '').split('\n').filter(function (x) { return x.trim(); });
-    var big = lines.shift() || '';
-    var small = lines.shift() || '';
+    var lines = String(name.body || '').split('\n')
+      .map(function (x) { return x.trim(); })
+      .filter(Boolean);
+    var sub = lines.pop() || '';
 
-    var html = '';
-    big.split(/\s+/).filter(Boolean).forEach(function (w, i) {
-      html += '<span class="ab-w"><i style="--d:' + (i * 55) + 'ms">' + abEsc(w) + '</i></span> ';
-      var shot = shots[i];
-      if (shot && shot.link) {
-        html += '<span class="ab-tile ab-up" style="--d:' + (i * 55 + 110) + 'ms">' +
+    var si = 0, seq = 0;
+    var rows = lines.map(function (ln) {
+      var cells = ln.split(/\s+/).filter(Boolean).map(function (tok) {
+        var d = (seq++) * 55;
+        if (tok !== '[]') {
+          return '<span class="ab-w"><i style="--d:' + d + 'ms">' + abEsc(tok) + '</i></span>';
+        }
+        var shot = shots[si++];
+        if (!shot || !shot.link) return '';
+        return '<span class="ab-tile ab-up" style="--d:' + (d + 90) + 'ms">' +
           '<img alt="" src="' + abEsc(shot.link) +
-          '" onerror="this.closest(\'.ab-tile\').remove()"></span> ';
-      }
+          '" onerror="this.closest(\'.ab-tile\').remove()"></span>';
+      });
+      return '<span class="ab-nrow">' + cells.join('') + '</span>';
     });
 
     nameBox.innerHTML =
-      '<p class="ab-name-mark">' + abEsc(name.title) + '</p>' +
-      '<p class="ab-name-line ab-split">' + html + '</p>' +
-      (small ? '<p class="ab-name-sub ab-up" style="--d:420ms">' + abEsc(small) + '</p>' : '');
+      '<p class="ab-name-line ab-split">' + rows.join('') + '</p>' +
+      (sub ? '<p class="ab-name-sub ab-up" style="--d:' + (seq * 55 + 160) + 'ms">' +
+             abEsc(sub) + '</p>' : '');
     nameBox.querySelector('.ab-name-line').dataset.split = '1';
   } else {
     nameBox.style.display = 'none';
@@ -1915,7 +1926,7 @@ function abEsc(s) {
    * 서버가 심어 주는 회사소개 줄들. 화면이 서버를 다시 부르지 않는다 —
    * 부를 것이 없으면 잘못 부를 수도 없다.
    */
-  var ABOUT_ROWS = [{"title": "공간을 넘어 삶을 디자인합니다.", "category": "머리", "body": "같은 집은 많아도, 같은 삶은 없으니까요.", "link": "", "status": "ready"}, {"title": "머리 사진", "category": "사진-머리", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260302/4f22038c06692.jpg", "status": "ready"}, {"title": "띠 사진", "category": "사진-띠", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260907/b7ba2b0f81e29.jpg", "status": "ready"}, {"title": "HOMELUDENS", "category": "이름", "body": "Designing the Joy of Everyday Life\n즐거움을 만들어가는 사람들이 디자인하는 공간", "link": "", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260907/26dd371c14b83.jpg", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20250929/572864464793f.jpg", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260601/6986d984ccf42.jpg", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20241118/c466c280af132.jpg", "status": "ready"}, {"title": "", "category": "강점", "body": "인테리어 회사를 선택할 때 꼭 확인해야 할 기준이 있습니다. 홈루덴스가 그 기준에 어떻게 답하고 있는지 소개합니다.", "link": "", "status": "ready"}, {"title": "건설업 면허를 보유하고 있습니다.", "category": "강점", "body": "홈루덴스는 실내건축공사업 등록업체입니다(등록번호 양천2024-나-03). 공사에 대한 책임과 하자보증 체계를 갖추고 있으며, 건설업 등록 여부는 상담 시 직접 확인하실 수 있습니다.", "link": "", "status": "ready"}, {"title": "하자보증보험증권을 발행합니다.", "category": "강점", "body": "서울보증보험의 이행(하자)보증보험증권을 발행합니다. 공사 완료 이후의 하자보증까지 공식적인 증권으로 보장하며, 준공 후 1년간 A/S를 운영합니다.", "link": "", "status": "ready"}, {"title": "집이 아니라 생활을 설계합니다.", "category": "강점", "body": "도면을 그리기 전에 고객의 생활 방식을 먼저 이해합니다. 레이아웃과 톤 앤 무드를 함께 정하고, 그 기준을 자재와 마감까지 일관되게 이어갑니다. 보기 좋은 공간을 넘어, 오래 살아도 편안한 공간을 설계합니다.", "link": "", "status": "ready"}, {"title": "공사 과정을 투명하게 공유합니다.", "category": "강점", "body": "현장마다 전용 소통방을 운영합니다. 매일 공사 진행 상황을 사진과 함께 안내하고, 주요 이슈가 발생하면 빠르게 공유합니다. 공사가 어떻게 진행되고 있는지 고객이 언제든 확인할 수 있습니다.", "link": "", "status": "ready"}, {"title": "", "category": "연혁", "body": "8년간 규모보다 먼저 다져온 것은 조직과 기준이었습니다. 더 많은 현장을 맡기 전에, 그 현장을 책임질 수 있는 구조를 먼저 만들었습니다.", "link": "", "status": "ready"}, {"title": "2018 START", "category": "연혁", "body": "인테리어 사업의 시작\n인테리어 사업자 설립\n6명의 구성원으로 시작", "link": "", "status": "ready"}, {"title": "2020–2021 FOUNDATION", "category": "연혁", "body": "브랜드와 조직의 기반 구축\n전문 디자이너 조직 확대\n연 매출 40억 규모로 성장", "link": "", "status": "ready"}, {"title": "2022 GROWTH", "category": "연혁", "body": "전문 인테리어 기업으로의 성장\n㈜홈루덴스 법인 전환\n전문 인력 25명 규모로 확대\n연 매출 70억 달성", "link": "", "status": "ready"}, {"title": "2023–2024 EXPANSION", "category": "연혁", "body": "더 많은 현장을 책임질 수 있는 회사로\n건설업 면허 취득 및 하자보증 체계 구축\n서울·부산 거점 확대\n전문 인력 50명 규모로 확대\n연 매출 200억 달성", "link": "", "status": "ready"}, {"title": "2025 SCALE UP", "category": "연혁", "body": "더 큰 규모를 책임지는 조직으로\n임직원 70명 규모로 확대\n누적 프로젝트 4,000건 돌파\n연 매출 300억 돌파", "link": "", "status": "ready"}, {"title": "2026 STANDARD", "category": "연혁", "body": "더 나은 인테리어의 기준을 만들어갑니다\n80명의 전문 인력으로 조직 확대\n디자인부터 시공까지 일관된 품질 기준 구축\n자체 제품 개발을 통한 품질 경쟁력 강화\n상담부터 사후관리까지 고객 경험 고도화", "link": "", "status": "ready"}, {"title": "", "category": "숫자", "body": "", "link": "", "status": "ready"}, {"title": "80명", "category": "숫자", "body": "전문 인력", "link": "", "status": "ready"}, {"title": "4,000건+", "category": "숫자", "body": "누적 프로젝트", "link": "", "status": "ready"}, {"title": "8년", "category": "숫자", "body": "2018년부터 쌓은 경험", "link": "", "status": "ready"}, {"title": "서울·부산", "category": "숫자", "body": "직영 거점", "link": "", "status": "ready"}, {"title": "", "category": "과정", "body": "프로젝트의 규모와 범위에 따라 차이가 있으며, 평균 공사 기간은 약 5~6주입니다.", "link": "", "status": "ready"}, {"title": "상담 문의", "category": "과정", "body": "견적 문의를 남겨주시면 담당 디자이너가 배정되어 순차적으로 연락드립니다.", "link": "", "status": "ready"}, {"title": "초도 상담", "category": "과정", "body": "공사 범위와 원하는 공간 구성을 확인하고, 예산에 맞춰 프로젝트의 기본 방향을 함께 정합니다.", "link": "", "status": "ready"}, {"title": "실측", "category": "과정", "body": "담당 디자이너가 현장을 방문해 공간을 정확히 실측하고 현장 상태를 확인합니다.", "link": "", "status": "ready"}, {"title": "디자인 미팅 · 계약", "category": "과정", "body": "레이아웃부터 디자인, 마감재, 가구와 3D까지 단계적으로 구체화하며 최종 디자인을 완성합니다.", "link": "", "status": "ready"}, {"title": "공사", "category": "과정", "body": "현장소장과 시공팀이 공정별 기준에 따라 현장을 관리합니다. 전용 소통방을 통해 공사 진행 상황을 지속적으로 공유합니다.", "link": "", "status": "ready"}, {"title": "마감 · 촬영", "category": "과정", "body": "입주 전 현장에서 마감 상태를 함께 확인합니다. 이후 완성된 공간의 사진과 영상을 촬영합니다.", "link": "", "status": "ready"}, {"title": "사후관리", "category": "과정", "body": "준공 후 1년간 A/S를 제공합니다. 고객 부주의로 발생한 A/S의 경우 별도 비용이 발생할 수 있습니다.", "link": "", "status": "ready"}, {"title": "", "category": "가치", "body": "고객 앞에서 약속한 기준을, 고객이 없는 자리에서도 지킵니다.", "link": "", "status": "ready"}, {"title": "고객중심", "category": "가치", "body": "좋은 결과만큼 그 과정에서 고객이 느끼는 경험도 중요하게 생각합니다. 모든 판단은 고객의 입장과 삶을 기준으로 이루어집니다.", "link": "", "status": "ready"}, {"title": "차별화", "category": "가치", "body": "좋은 결과는 작은 차이에서 만들어집니다. 설계부터 자재 선정, 시공과 마감까지 「왜 이렇게 해야 하는지」에 대한 명확한 기준을 가지고 실행합니다.", "link": "", "status": "ready"}, {"title": "동반성장", "category": "가치", "body": "조직과 협력사, 현장이 함께 성장할 수 있는 구조를 만듭니다. 현장을 함께 만드는 사람이 존중받아야 결과도 좋아집니다.", "link": "", "status": "ready"}, {"title": "", "category": "채널", "body": "홈루덴스가 만들어가는 공간과 현장의 이야기를 다양한 채널에서 만나보실 수 있습니다.", "link": "", "status": "ready"}, {"title": "공식 인스타그램", "category": "채널", "body": "@homeludens_official", "link": "https://www.instagram.com/homeludens_official", "status": "ready"}, {"title": "유튜브 채널", "category": "채널", "body": "@homeludens_interior", "link": "https://www.youtube.com/@homeludens_interior", "status": "ready"}, {"title": "네이버 블로그", "category": "채널", "body": "홈루덴스 공식블로그", "link": "https://blog.naver.com/homeludens_official", "status": "ready"}, {"title": "홈페이지", "category": "채널", "body": "homeludens.co.kr", "link": "https://homeludens.co.kr", "status": "ready"}, {"title": "", "category": "오시는길", "body": "목동 본사와 디자인스튜디오, 서초와 부산에서 홈루덴스를 만나실 수 있습니다.", "link": "", "status": "ready"}, {"title": "목동 본사 3611호", "category": "오시는길", "body": "서울시 양천구 목동동로 293 현대41타워 3611호", "link": "https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EC%96%91%EC%B2%9C%EA%B5%AC%20%EB%AA%A9%EB%8F%99%EB%8F%99%EB%A1%9C%20293%20%ED%98%84%EB%8C%8041%ED%83%80%EC%9B%8C", "status": "ready"}, {"title": "목동 디자인스튜디오 3211호", "category": "오시는길", "body": "서울시 양천구 목동동로 293 현대41타워 3211호", "link": "https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EC%96%91%EC%B2%9C%EA%B5%AC%20%EB%AA%A9%EB%8F%99%EB%8F%99%EB%A1%9C%20293%20%ED%98%84%EB%8C%8041%ED%83%80%EC%9B%8C", "status": "ready"}, {"title": "서초 지점", "category": "오시는길", "body": "서울시 서초구 남부순환로 2457 보성빌딩 3층 304호", "link": "https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EC%84%9C%EC%B4%88%EA%B5%AC%20%EB%82%A8%EB%B6%80%EC%88%9C%ED%99%98%EB%A1%9C%202457%20%EB%B3%B4%EC%84%B1%EB%B9%8C%EB%94%A9", "status": "ready"}, {"title": "부산 지점", "category": "오시는길", "body": "부산광역시 해운대구 센텀중앙로 90 큐비E센텀 1712호", "link": "https://map.naver.com/p/search/%EB%B6%80%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%ED%95%B4%EC%9A%B4%EB%8C%80%EA%B5%AC%20%EC%84%BC%ED%85%80%EC%A4%91%EC%95%99%EB%A1%9C%2090%20%ED%81%90%EB%B9%84E%EC%84%BC%ED%85%80", "status": "ready"}, {"title": "", "category": "아랫단", "body": "2024. Copyright. HOMELUDENS All Right Reserved.", "link": "", "status": "ready"}, {"title": "상호명", "category": "아랫단", "body": "홈루덴스", "link": "", "status": "ready"}, {"title": "사업자등록번호", "category": "아랫단", "body": "673-88-02745", "link": "", "status": "ready"}, {"title": "건설업등록번호", "category": "아랫단", "body": "양천2024-나-03", "link": "", "status": "ready"}, {"title": "TEL", "category": "아랫단", "body": "070-8095-3601", "link": "tel:07080953601", "status": "ready"}];
+  var ABOUT_ROWS = [{"title": "공간을 넘어 삶을 디자인합니다.", "category": "머리", "body": "같은 집은 많아도, 같은 삶은 없으니까요.", "link": "", "status": "ready"}, {"title": "머리 사진", "category": "사진-머리", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260302/4f22038c06692.jpg", "status": "ready"}, {"title": "띠 사진", "category": "사진-띠", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260907/b7ba2b0f81e29.jpg", "status": "ready"}, {"title": "HOMELUDENS", "category": "이름", "body": "HOMELUDENS []\n[] Designing the\nJoy of [] Everyday Life\n즐거움을 만들어가는 사람들이 디자인하는 공간", "link": "", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260907/26dd371c14b83.jpg", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20250929/572864464793f.jpg", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20260601/6986d984ccf42.jpg", "status": "ready"}, {"title": "", "category": "사진-이름", "body": "", "link": "https://cdn.imweb.me/thumbnail/20241118/c466c280af132.jpg", "status": "ready"}, {"title": "", "category": "강점", "body": "인테리어 회사를 선택할 때 꼭 확인해야 할 기준이 있습니다. 홈루덴스가 그 기준에 어떻게 답하고 있는지 소개합니다.", "link": "", "status": "ready"}, {"title": "건설업 면허를 보유하고 있습니다.", "category": "강점", "body": "홈루덴스는 실내건축공사업 등록업체입니다(등록번호 양천2024-나-03). 공사에 대한 책임과 하자보증 체계를 갖추고 있으며, 건설업 등록 여부는 상담 시 직접 확인하실 수 있습니다.", "link": "", "status": "ready"}, {"title": "하자보증보험증권을 발행합니다.", "category": "강점", "body": "서울보증보험의 이행(하자)보증보험증권을 발행합니다. 공사 완료 이후의 하자보증까지 공식적인 증권으로 보장하며, 준공 후 1년간 A/S를 운영합니다.", "link": "", "status": "ready"}, {"title": "집이 아니라 생활을 설계합니다.", "category": "강점", "body": "도면을 그리기 전에 고객의 생활 방식을 먼저 이해합니다. 레이아웃과 톤 앤 무드를 함께 정하고, 그 기준을 자재와 마감까지 일관되게 이어갑니다. 보기 좋은 공간을 넘어, 오래 살아도 편안한 공간을 설계합니다.", "link": "", "status": "ready"}, {"title": "공사 과정을 투명하게 공유합니다.", "category": "강점", "body": "현장마다 전용 소통방을 운영합니다. 매일 공사 진행 상황을 사진과 함께 안내하고, 주요 이슈가 발생하면 빠르게 공유합니다. 공사가 어떻게 진행되고 있는지 고객이 언제든 확인할 수 있습니다.", "link": "", "status": "ready"}, {"title": "", "category": "연혁", "body": "8년간 규모보다 먼저 다져온 것은 조직과 기준이었습니다. 더 많은 현장을 맡기 전에, 그 현장을 책임질 수 있는 구조를 먼저 만들었습니다.", "link": "", "status": "ready"}, {"title": "2018 START", "category": "연혁", "body": "인테리어 사업의 시작\n인테리어 사업자 설립\n6명의 구성원으로 시작", "link": "", "status": "ready"}, {"title": "2020–2021 FOUNDATION", "category": "연혁", "body": "브랜드와 조직의 기반 구축\n전문 디자이너 조직 확대\n연 매출 40억 규모로 성장", "link": "", "status": "ready"}, {"title": "2022 GROWTH", "category": "연혁", "body": "전문 인테리어 기업으로의 성장\n㈜홈루덴스 법인 전환\n전문 인력 25명 규모로 확대\n연 매출 70억 달성", "link": "", "status": "ready"}, {"title": "2023–2024 EXPANSION", "category": "연혁", "body": "더 많은 현장을 책임질 수 있는 회사로\n건설업 면허 취득 및 하자보증 체계 구축\n서울·부산 거점 확대\n전문 인력 50명 규모로 확대\n연 매출 200억 달성", "link": "", "status": "ready"}, {"title": "2025 SCALE UP", "category": "연혁", "body": "더 큰 규모를 책임지는 조직으로\n임직원 70명 규모로 확대\n누적 프로젝트 4,000건 돌파\n연 매출 300억 돌파", "link": "", "status": "ready"}, {"title": "2026 STANDARD", "category": "연혁", "body": "더 나은 인테리어의 기준을 만들어갑니다\n80명의 전문 인력으로 조직 확대\n디자인부터 시공까지 일관된 품질 기준 구축\n자체 제품 개발을 통한 품질 경쟁력 강화\n상담부터 사후관리까지 고객 경험 고도화", "link": "", "status": "ready"}, {"title": "", "category": "숫자", "body": "", "link": "", "status": "ready"}, {"title": "80명", "category": "숫자", "body": "전문 인력", "link": "", "status": "ready"}, {"title": "4,000건+", "category": "숫자", "body": "누적 프로젝트", "link": "", "status": "ready"}, {"title": "8년", "category": "숫자", "body": "2018년부터 쌓은 경험", "link": "", "status": "ready"}, {"title": "서울·부산", "category": "숫자", "body": "직영 거점", "link": "", "status": "ready"}, {"title": "", "category": "과정", "body": "프로젝트의 규모와 범위에 따라 차이가 있으며, 평균 공사 기간은 약 5~6주입니다.", "link": "", "status": "ready"}, {"title": "상담 문의", "category": "과정", "body": "견적 문의를 남겨주시면 담당 디자이너가 배정되어 순차적으로 연락드립니다.", "link": "", "status": "ready"}, {"title": "초도 상담", "category": "과정", "body": "공사 범위와 원하는 공간 구성을 확인하고, 예산에 맞춰 프로젝트의 기본 방향을 함께 정합니다.", "link": "", "status": "ready"}, {"title": "실측", "category": "과정", "body": "담당 디자이너가 현장을 방문해 공간을 정확히 실측하고 현장 상태를 확인합니다.", "link": "", "status": "ready"}, {"title": "디자인 미팅 · 계약", "category": "과정", "body": "레이아웃부터 디자인, 마감재, 가구와 3D까지 단계적으로 구체화하며 최종 디자인을 완성합니다.", "link": "", "status": "ready"}, {"title": "공사", "category": "과정", "body": "현장소장과 시공팀이 공정별 기준에 따라 현장을 관리합니다. 전용 소통방을 통해 공사 진행 상황을 지속적으로 공유합니다.", "link": "", "status": "ready"}, {"title": "마감 · 촬영", "category": "과정", "body": "입주 전 현장에서 마감 상태를 함께 확인합니다. 이후 완성된 공간의 사진과 영상을 촬영합니다.", "link": "", "status": "ready"}, {"title": "사후관리", "category": "과정", "body": "준공 후 1년간 A/S를 제공합니다. 고객 부주의로 발생한 A/S의 경우 별도 비용이 발생할 수 있습니다.", "link": "", "status": "ready"}, {"title": "", "category": "가치", "body": "고객 앞에서 약속한 기준을, 고객이 없는 자리에서도 지킵니다.", "link": "", "status": "ready"}, {"title": "고객중심", "category": "가치", "body": "좋은 결과만큼 그 과정에서 고객이 느끼는 경험도 중요하게 생각합니다. 모든 판단은 고객의 입장과 삶을 기준으로 이루어집니다.", "link": "", "status": "ready"}, {"title": "차별화", "category": "가치", "body": "좋은 결과는 작은 차이에서 만들어집니다. 설계부터 자재 선정, 시공과 마감까지 「왜 이렇게 해야 하는지」에 대한 명확한 기준을 가지고 실행합니다.", "link": "", "status": "ready"}, {"title": "동반성장", "category": "가치", "body": "조직과 협력사, 현장이 함께 성장할 수 있는 구조를 만듭니다. 현장을 함께 만드는 사람이 존중받아야 결과도 좋아집니다.", "link": "", "status": "ready"}, {"title": "", "category": "채널", "body": "홈루덴스가 만들어가는 공간과 현장의 이야기를 다양한 채널에서 만나보실 수 있습니다.", "link": "", "status": "ready"}, {"title": "공식 인스타그램", "category": "채널", "body": "@homeludens_official", "link": "https://www.instagram.com/homeludens_official", "status": "ready"}, {"title": "유튜브 채널", "category": "채널", "body": "@homeludens_interior", "link": "https://www.youtube.com/@homeludens_interior", "status": "ready"}, {"title": "네이버 블로그", "category": "채널", "body": "홈루덴스 공식블로그", "link": "https://blog.naver.com/homeludens_official", "status": "ready"}, {"title": "홈페이지", "category": "채널", "body": "homeludens.co.kr", "link": "https://homeludens.co.kr", "status": "ready"}, {"title": "", "category": "오시는길", "body": "목동 본사와 디자인스튜디오, 서초와 부산에서 홈루덴스를 만나실 수 있습니다.", "link": "", "status": "ready"}, {"title": "목동 본사 3611호", "category": "오시는길", "body": "서울시 양천구 목동동로 293 현대41타워 3611호", "link": "https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EC%96%91%EC%B2%9C%EA%B5%AC%20%EB%AA%A9%EB%8F%99%EB%8F%99%EB%A1%9C%20293%20%ED%98%84%EB%8C%8041%ED%83%80%EC%9B%8C", "status": "ready"}, {"title": "목동 디자인스튜디오 3211호", "category": "오시는길", "body": "서울시 양천구 목동동로 293 현대41타워 3211호", "link": "https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EC%96%91%EC%B2%9C%EA%B5%AC%20%EB%AA%A9%EB%8F%99%EB%8F%99%EB%A1%9C%20293%20%ED%98%84%EB%8C%8041%ED%83%80%EC%9B%8C", "status": "ready"}, {"title": "서초 지점", "category": "오시는길", "body": "서울시 서초구 남부순환로 2457 보성빌딩 3층 304호", "link": "https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EC%84%9C%EC%B4%88%EA%B5%AC%20%EB%82%A8%EB%B6%80%EC%88%9C%ED%99%98%EB%A1%9C%202457%20%EB%B3%B4%EC%84%B1%EB%B9%8C%EB%94%A9", "status": "ready"}, {"title": "부산 지점", "category": "오시는길", "body": "부산광역시 해운대구 센텀중앙로 90 큐비E센텀 1712호", "link": "https://map.naver.com/p/search/%EB%B6%80%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%ED%95%B4%EC%9A%B4%EB%8C%80%EA%B5%AC%20%EC%84%BC%ED%85%80%EC%A4%91%EC%95%99%EB%A1%9C%2090%20%ED%81%90%EB%B9%84E%EC%84%BC%ED%85%80", "status": "ready"}, {"title": "", "category": "아랫단", "body": "2024. Copyright. HOMELUDENS All Right Reserved.", "link": "", "status": "ready"}, {"title": "상호명", "category": "아랫단", "body": "홈루덴스", "link": "", "status": "ready"}, {"title": "사업자등록번호", "category": "아랫단", "body": "673-88-02745", "link": "", "status": "ready"}, {"title": "건설업등록번호", "category": "아랫단", "body": "양천2024-나-03", "link": "", "status": "ready"}, {"title": "TEL", "category": "아랫단", "body": "070-8095-3601", "link": "tel:07080953601", "status": "ready"}];
   renderAbout(ABOUT_ROWS);
   abReveal();
 </script>
