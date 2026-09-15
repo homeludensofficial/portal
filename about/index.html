@@ -3,6 +3,33 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
+  <!--
+    폰에서 열리는 화면이다. viewport 가 없으면 브라우저가 폭을 980px 로 잡고
+    데스크톱 화면을 축소해 보여 준다 — 글자가 깨알같이 작아진다.
+
+    Apps Script 로 열 때는 서버가 붙여 주지만(WebApp.gs 의 addMetaTag), 정적
+    한 장으로 뽑을 때는 그 서버가 없다. 여기 적어 두면 양쪽 다 맞는다.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!--
+    카카오톡·문자로 주소를 보내면 받는 쪽에 뜨는 미리보기.
+    이 태그들이 없으면 「미리보기가 없습니다」 만 뜨고, 고객은 무엇인지 모르는
+    링크를 눌러야 한다. 직원이 고객에게 보내는 주소라 이게 첫인상이다.
+
+    그림은 회사 홈페이지가 쓰는 공유용 이미지 그대로다(1200×627). 이 화면의
+    머리 사진은 세로로 길어서 미리보기 칸에서 위아래가 잘린다.
+  -->
+  <title>홈루덴스 — 회사소개</title>
+  <meta name="description" content="즐거움을 만들어가는 사람들이 디자인하는 공간. 건설업 면허와 하자보증, 8년 동안 쌓아 온 기준을 소개합니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="홈루덴스">
+  <meta property="og:title" content="홈루덴스 — 공간을 넘어 삶을 디자인합니다">
+  <meta property="og:description" content="즐거움을 만들어가는 사람들이 디자인하는 공간. 건설업 면허와 하자보증, 8년 동안 쌓아 온 기준을 소개합니다.">
+  <meta property="og:image" content="https://cdn.imweb.me/upload/S202410021f65846b53dd9/55820a69226dd.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="627">
+  <meta name="twitter:card" content="summary_large_image">
   <style>
 /*
  * 포털 스타일.
