@@ -156,9 +156,24 @@
    *
    * 보낸 곳이 우리 포털인지 확인한다 — 액자 안에 다른 페이지가 들어와
    * 아무 값이나 넣어 두는 일을 막는다.
+   *
+   * ★ googleusercontent 도 받는다(2026-09-16 에 고쳤다). 액자가 두 겹이라
+   *   우리 화면은 script.google.com 이 아니라 구글이 따로 띄우는 샌드박스
+   *   주소에서 돈다 — 보내는 쪽 주소가 그것이다. script.google.com 만
+   *   받도록 두었더니 메시지가 통째로 버려졌고, 껍데기는 세션을 한 번도
+   *   저장하지 못했다. 증상은 「앱을 열 때마다 로그인」 으로만 보였다.
+   *
+   *   하위 도메인이 매번 바뀌므로 정확히 못 박을 수가 없다. 대신 이 액자에
+   *   들어오는 것은 우리가 src 로 지정한 포털뿐이라, 구글이 띄운 것까지만
+   *   받아도 아무나 값을 넣지는 못한다.
    */
+  function fromPortal(origin) {
+    if (origin === new URL(EXEC).origin) return true;
+    return /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.googleusercontent\.com$/.test(origin);
+  }
+
   window.addEventListener('message', function (ev) {
-    if (ev.origin !== new URL(EXEC).origin) return;
+    if (!fromPortal(ev.origin)) return;
     var d = ev.data;
     if (!d || d.type !== 'homeludens-session') return;
     try {
