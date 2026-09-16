@@ -1394,6 +1394,26 @@ a.ab-place:hover { border-color: var(--ab-accent); transform: translateY(-3px); 
   .ab-band { height: 44vh; }
 }
 
+/*
+ * 폰에서 이름 둘째 줄을 한 줄로 붙든다.
+ *
+ * 「Designing the Joy of Everyday Life」 가 375px 에서 31px 모자라 「Life」
+ * 한 낱말만 아래로 떨어졌다. 낱말 하나가 혼자 내려간 줄은 끊긴 자리가
+ * 뜻하는 바가 없어서, 읽는 사람이 한 번 멈칫한다. 고객이 보는 첫 화면이다.
+ *
+ * 줄을 「of / Everyday Life」 로 나누지 않고 글자를 줄인 이유는, 넓은
+ * 화면에서는 지금처럼 한 줄로 읽히는 편이 낫고 줄을 나누면 거기서도
+ * 두 줄이 되기 때문이다. 자간을 먼저 걷고(여기는 보는 덩어리라 넓게
+ * 두었지만 폰에서는 그 여유가 곧 넘침이다) 그다음 크기를 줄인다.
+ *
+ * 0.86 은 360px 에서도 한 줄로 남는 값이다(0.92 는 375px 만 되고 360px 에서
+ * 다시 접힌다). 경계 480px 은 흔한 폰을 모두 담으면서, 한 줄이 이미
+ * 편안한 폭은 건드리지 않는 선이다.
+ */
+@media (max-width: 480px) {
+  .ab-name-line .ab-nrow-2 { font-size: .86em; letter-spacing: 0; }
+}
+
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
 code { background: var(--surface-2); padding: 1px 6px; border-radius: 5px;
