@@ -20,7 +20,7 @@
     그림은 회사 홈페이지가 쓰는 공유용 이미지 그대로다(1200×627). 이 화면의
     머리 사진은 세로로 길어서 미리보기 칸에서 위아래가 잘린다.
   -->
-  <title>홈루덴스 — 회사소개</title>
+  <title>홈루덴스 회사소개</title>
   <meta name="description" content="즐거움을 만들어가는 사람들이 디자인하는 공간. 건설업 면허와 하자보증, 8년 동안 쌓아 온 기준을 소개합니다.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="홈루덴스">
@@ -725,6 +725,11 @@ body.pre-login header { display: none; }
 /* 좁은 화면에서 일곱 칸을 억지로 욱여넣으면 글자가 한 자씩 끊긴다.
    달력은 한 달이 한 장으로 보여야 표 노릇을 하므로, 줄이는 대신 옆으로 민다. */
 .mcal-wrap { overflow-x: auto; padding: 3px 3px 6px; margin: 0 -3px; }
+
+/* 달을 옮기는 동안. 표를 지우지 않고 흐리게만 둔다 — 빈 화면이 한 번
+   번쩍이는 것보다 옛 표가 흐려졌다가 새 표가 오는 편이 덜 어수선하다.
+   pointer-events 를 끊어 두 번 누르는 것도 막는다. */
+.sc-busy { opacity: .4; pointer-events: none; transition: opacity .12s; }
 .mcal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 8px; min-width: 660px; }
 .mcal .dow {
@@ -1028,6 +1033,10 @@ body.pre-login header { display: none; }
 .note.warn { background: var(--warn-soft); color: var(--warn); }
 .note.err  { background: var(--danger-soft); color: var(--danger); }
 
+/* 자료실 안내 박스의 제목. .note 가 pre-line 이라 block 으로 세워야 줄이 진다.
+   전역 클래스 이름을 피해 화면 접두사를 붙인다(dn = docs notice). */
+.dn-title { display: block; font-size: 15px; margin-bottom: 4px; }
+
 #toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
   background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px;
@@ -1320,6 +1329,60 @@ a.ab-place:hover { border-color: var(--ab-accent); transform: translateY(-3px); 
   .ab-band-img { clip-path: none; transition: none; }
   .ab-cue, .ab-t-now::before { animation: none; }
   .ab-tile { opacity: 1; transform: none; transition: none; }
+}
+
+/* 고른 날 상자. 좁은 화면에서만 보인다(아래 미디어쿼리). */
+.sc-day { display: none; margin-top: 10px; background: var(--surface);
+          border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); }
+.sc-day-h { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.sc-day-evs { display: flex; flex-direction: column; gap: 6px; }
+.sc-day-none { font-size: 13px; color: var(--muted); }
+
+/*
+ * 폰에서 한 달을 한눈에.
+ *
+ * 660px 짜리 격자를 그대로 두면 일주일 중 서너 날만 보이고 나머지는 옆으로
+ * 밀어야 한다. 가로로도 세로로도 미는 달력은 「이번 달이 어떤 달인가」 를
+ * 보여주지 못한다 — 그게 이 화면의 쓸모인데.
+ *
+ * 그래서 칸을 화면 폭에 맞춰 줄이고, 그 안에서 제목을 포기한다. 한 칸이
+ * 50px 이라 두 글자도 안 들어가고, 억지로 넣으면 「전체…」 같은 조각만
+ * 남아 오히려 읽는 사람을 헷갈리게 한다. 칸에는 「무슨 종류가 있다」 까지만
+ * 남기고(배지 글자 + 색 막대), 무엇인지는 날짜를 눌러 아래에서 본다.
+ *
+ * 경계는 660px — .mcal 의 min-width 와 같은 값이다. 그보다 좁으면 어차피
+ * 옆으로 밀어야 하므로, 미는 대신 줄이는 편이 낫다.
+ */
+@media (max-width: 660px) {
+  .mcal-wrap { overflow-x: visible; }
+  .mcal { min-width: 0; gap: 4px; }
+
+  .mcal .dow { font-size: 10px; letter-spacing: 0; padding: 5px 0; }
+  .mcal .cell { min-height: 54px; padding: 4px 4px 5px; border-radius: 10px; }
+  .mcal .cell .d { font-size: 12.5px; }
+  .mcal .cell.today { box-shadow: inset 0 0 0 2px var(--accent), var(--shadow); }
+  .mcal .cell.picked { box-shadow: inset 0 0 0 2px var(--text), var(--shadow); }
+
+  /* 배지는 날짜와 같은 줄 오른쪽에. 19px 원은 좁은 칸에서 크다.
+     아래로 내려 보았더니 날짜와 막대 사이에 끼어 칸이 세 층으로 보였다. */
+  .mcal .cell .kind-dot {
+    top: 4px; right: 4px; width: 14px; height: 14px;
+    font-size: 8px; border-width: 1.2px;
+  }
+
+  /*
+   * 칩을 색 막대로 줄인다. 글자를 감추는 것이 아니라 자리를 없앤다 —
+   * 감추기만 하면 padding 이 남아 칸이 부풀고, 그러면 한 달이 또 넘친다.
+   * 막대 수가 그날 일정 수라서 「두 개 있다」 까지는 칸에서 읽힌다.
+   */
+  .mcal .evs { margin-top: 3px; gap: 2px; }
+  .mcal .evs .ev {
+    font-size: 0; line-height: 0; padding: 0; height: 4px;
+    border-radius: 2px; width: 100%;
+  }
+  .mcal .evs .ev .x { display: none; }
+
+  .sc-day { display: block; }
 }
 
 @media (max-width: 760px) {
