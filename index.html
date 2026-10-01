@@ -79,11 +79,35 @@
   /* display:grid 가 브라우저의 hidden 처리를 이기므로 직접 적어 준다. */
   #wait[hidden] { display: none; }
 
+  /*
+    알림 허락을 받는 아래쪽 판. 포털(액자 안)에서 「저장」 을 누르면 뜬다.
+    아이폰은 이 페이지에서 사람이 직접 누른 단추로만 허락 창을 열어 주므로,
+    한 번 더 누르게 하는 수밖에 없다.
+  */
+  #ask {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
+    background: #fffdfb; color: #2b2622; border-top: 1px solid #e4ddd5;
+    box-shadow: 0 -8px 24px rgba(0,0,0,.08);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  }
+  #ask[hidden] { display: none; }
+  #ask p { margin: 0 0 14px; }
+  #ask .btns { display: flex; gap: 10px; justify-content: flex-end; }
+  #ask button {
+    font: inherit; font-weight: 600; border-radius: 10px; padding: 10px 18px;
+    border: 1px solid #d9d0c6; background: transparent; color: inherit;
+  }
+  #ask button.go { background: #2b2622; color: #fff; border-color: #2b2622; }
+
   /* 어두운 화면일 때. 값은 포털 Style.html 의 다크 모드 --bg 와 같다. */
   @media (prefers-color-scheme: dark) {
     html, body { background: #211f1c; }
     #wait { background: #211f1c; color: #a69a8f; }
     #wait img { filter: invert(1); }
+    #ask { background: #2a2724; color: #eee6dd; border-top-color: #3a3530; }
+    #ask button { border-color: #4a443d; }
+    #ask button.go { background: #eee6dd; color: #211f1c; border-color: #eee6dd; }
   }
 </style>
 </head>
@@ -92,6 +116,10 @@
 <div id="wait"><div><img src="symbol-mono.png" alt=""><br>포털을 여는 중…</div></div>
 <iframe id="portal" title="홈루덴스 업무지원 포털"
         allow="clipboard-write; downloads"></iframe>
+<div id="ask" hidden role="dialog" aria-label="알림 허용">
+  <p><b>상담실 예약 알림</b><br>새 예약을 이 폰으로 받으려면 알림을 허용해 주세요.</p>
+  <div class="btns"><button id="ask-no">나중에</button><button id="ask-go" class="go">허용</button></div>
+</div>
 
 <script>
 /*
@@ -175,11 +203,127 @@
   window.addEventListener('message', function (ev) {
     if (!fromPortal(ev.origin)) return;
     var d = ev.data;
-    if (!d || d.type !== 'homeludens-session') return;
+    if (!d) return;
+    if (d.type === 'homeludens-push-hello') return pushReply(ev);
+    if (d.type === 'homeludens-push-ask') return pushAsk(ev, d.key);
+    if (d.type !== 'homeludens-session') return;
     try {
       if (d.token) localStorage.setItem(KEY, d.token);
       else localStorage.removeItem(KEY);
     } catch (e) {}
+  });
+
+  /*
+   * 예약 알림.
+   *
+   * 알림을 받는 것은 이 껍데기다. 포털은 구글이 매번 다른 주소에 띄워서
+   * 거기서 구독하면 다음에 찾을 수 없다. 포털은 사무실을 고르고 서버에
+   * 적는 일만 하고, 폰의 허락과 구독은 여기서 만든다.
+   *
+   * 구독을 서버에 적는 것도 포털이 한다. 로그인한 사람이 누구인지는 포털이
+   * 알고, 이 껍데기가 서버를 직접 부르면 그 확인을 여기서 한 번 더 해야 한다.
+   *
+   * 대답은 물어 온 창(ev.source)에, 물어 온 주소(ev.origin)로만 보낸다.
+   * 구독 주소를 아는 사람은 이 폰에 알림을 밀어 넣을 수 있다.
+   */
+  function pushSupported() {
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  }
+
+  function pushReason() {
+    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var standalone = navigator.standalone === true ||
+                     (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    return ios && !standalone ? 'ios-browser' : 'unsupported';
+  }
+
+  function b64u(buf) {
+    var s = '', b = new Uint8Array(buf);
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function unb64u(s) {
+    var t = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (t.length % 4) t += '=';
+    var bin = atob(t), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function currentSub() {
+    return navigator.serviceWorker.ready.then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (sub) { return { reg: reg, sub: sub }; });
+    });
+  }
+
+  function pushState(extra) {
+    var base = { type: 'homeludens-push-state' };
+    if (!pushSupported()) {
+      base.supported = false; base.reason = pushReason();
+      return Promise.resolve(base);
+    }
+    base.supported = true;
+    base.permission = Notification.permission;
+    return currentSub().then(function (x) {
+      // 허락이 거둬졌는데 구독이 남아 있으면 없는 것으로 친다. 서버에 적어 봐야 안 간다.
+      if (x.sub && Notification.permission === 'granted') {
+        var j = x.sub.toJSON();
+        base.endpoint = j.endpoint; base.p256dh = j.keys.p256dh; base.auth = j.keys.auth;
+      }
+      for (var k in (extra || {})) base[k] = extra[k];
+      return base;
+    });
+  }
+
+  function pushReply(ev, extra) {
+    pushState(extra).then(function (s) {
+      try { ev.source.postMessage(s, ev.origin); } catch (e) {}
+    });
+  }
+
+  var ask = document.getElementById('ask');
+  var asking = null;
+
+  function pushAsk(ev, key) {
+    if (!pushSupported() || !key) return pushReply(ev);
+    currentSub().then(function (x) {
+      // 이미 같은 열쇠로 구독해 두었으면 묻지 않는다.
+      var have = x.sub && x.sub.options && x.sub.options.applicationServerKey;
+      if (x.sub && Notification.permission === 'granted' &&
+          (!have || b64u(have) === key)) return pushReply(ev);
+      asking = { ev: ev, key: key };
+      ask.hidden = false;
+    });
+  }
+
+  document.getElementById('ask-no').addEventListener('click', function () {
+    ask.hidden = true;
+    if (asking) pushReply(asking.ev, { cancelled: true });
+    asking = null;
+  });
+
+  document.getElementById('ask-go').addEventListener('click', function () {
+    ask.hidden = true;
+    var a = asking;
+    asking = null;
+    if (!a) return;
+    // requestPermission 은 이 누름 안에서 바로 불러야 한다. 앞에 다른 기다림을 끼우면
+    // 아이폰이 사람이 누른 것으로 치지 않는다.
+    Promise.resolve(Notification.requestPermission())
+      .then(function (p) {
+        if (p !== 'granted') return pushReply(a.ev);
+        return currentSub().then(function (x) {
+          // 열쇠가 바뀐 옛 구독은 새 열쇠로 다시 만들 수 없다. 먼저 푼다.
+          return (x.sub ? x.sub.unsubscribe() : Promise.resolve()).then(function () {
+            return x.reg.pushManager.subscribe({
+              userVisibleOnly: true, applicationServerKey: unb64u(a.key)
+            });
+          });
+        }).then(function () { pushReply(a.ev); });
+      })
+      .catch(function (e) { pushReply(a.ev, { error: String(e && e.message || e) }); });
   });
 
   if (q) {

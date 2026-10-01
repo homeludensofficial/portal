@@ -1,14 +1,15 @@
 /*
  * 서비스 워커.
  *
- * 하는 일이 거의 없다. 안드로이드가 「앱으로 깔 수 있는 페이지」로 인정하려면
- * 이것이 등록되어 있어야 해서 둔다.
+ * 하는 일은 둘이다. 안드로이드가 「앱으로 깔 수 있는 페이지」로 인정하려면
+ * 이것이 등록되어 있어야 하고, 상담실 예약 알림(Push.gs)을 받아 띄우는 것도
+ * 이것이다 — 앱이 닫혀 있어도 폰이 이것만 깨워서 알림을 보여 준다.
  *
  * 포털 내용은 캐시하지 않는다. 캐시하면 어제 명부를 보여주고도 최신인 척하게
  * 되고, 그건 안 보이는 것보다 나쁘다. 껍데기(아이콘·틀)만 담아 두어서 신호가
  * 약할 때도 앱이 흰 화면 대신 무언가를 띄우게 한다.
  */
-const SHELL = 'homeludens-shell-v12';
+const SHELL = 'homeludens-shell-v13';
 const FILES = [
   './',
   './index.html',
@@ -53,5 +54,33 @@ self.addEventListener('fetch', e => {
         return res;
       })
       .catch(() => caches.match(e.request).then(hit => hit || caches.match('./index.html')))
+  );
+});
+
+/*
+ * 예약 알림. 내용은 서버가 잠가 보내고 브라우저가 풀어서 준다.
+ *
+ * 받은 알림은 반드시 띄운다. 아이폰은 받고도 안 띄우는 앱의 알림을 몇 번 만에
+ * 끊어 버린다. 그래서 내용을 못 읽어도 한 줄은 띄운다.
+ */
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) {}
+  e.waitUntil(self.registration.showNotification(d.title || '상담실 예약', {
+    body: d.body || '새 예약이 잡혔습니다.',
+    tag: d.tag || undefined,
+    icon: './icon-192-v9.png',
+    badge: './symbol-mono.png'
+  }));
+});
+
+// 알림을 누르면 앱을 연다. 이미 열려 있으면 그 창을 앞으로.
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) if ('focus' in c) return c.focus();
+      return self.clients.openWindow('./');
+    })
   );
 });
