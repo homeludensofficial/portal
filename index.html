@@ -136,6 +136,8 @@
 (function () {
   var EXEC = 'https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec';
   var q = location.search || '';
+  // 속도 표시(#t)는 주소를 정리하기 전에 읽어 둔다 — 아래에서 주소창을 비운다.
+  var wantTiming = /(^|[#&])t\b/.test(location.hash);
   var frame = document.getElementById('portal');
   var wait = document.getElementById('wait');
 
@@ -172,7 +174,7 @@
    * 남이 흉내내도 숫자 한 줄이 보일 뿐이다.
    */
   function showTiming() {
-    if (!/(^|[#&])t\b/.test(location.hash.slice(1))) return;
+    if (!wantTiming) return;
     var now = performance.now();
     var box = document.createElement('div');
     box.style.cssText = 'position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));' +
