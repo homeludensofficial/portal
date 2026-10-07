@@ -9,15 +9,15 @@
  * 되고, 그건 안 보이는 것보다 나쁘다. 껍데기(아이콘·틀)만 담아 두어서 신호가
  * 약할 때도 앱이 흰 화면 대신 무언가를 띄우게 한다.
  */
-const SHELL = 'homeludens-shell-v15';
+const SHELL = 'homeludens-shell-v16';
 const FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icon-192-v11.png',
-  './icon-512-v11.png',
-  './icon-180-v11.png',
-  './icon-152-v11.png',
+  './icon-192-v12.png',
+  './icon-512-v12.png',
+  './icon-180-v12.png',
+  './icon-152-v12.png',
   './symbol-mono.png'
 ];
 
@@ -69,7 +69,7 @@ self.addEventListener('push', e => {
   e.waitUntil(self.registration.showNotification(d.title || '상담실 예약', {
     body: d.body || '새 예약이 잡혔습니다.',
     tag: d.tag || undefined,
-    icon: './icon-192-v11.png',
+    icon: './icon-192-v12.png',
     badge: './symbol-mono.png'
   }));
 });
