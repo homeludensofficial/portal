@@ -222,12 +222,25 @@
 
   function load() {
     if (DATA_URL) {
+      /*
+       * 주소에 열쇠가 없으면 서버에 묻지 않는다. 물으면 웹앱이 JSON 대신 포털
+       * 로그인 페이지를 돌려주고, 브라우저는 그것을 「Failed to fetch」 로만
+       * 알린다 — 2026-10-15 에 담당자가 board/ 만 열어 보고 그 영어 한 줄을 봤다.
+       */
+      if (!KEY) {
+        fail(new Error('이 주소에는 현황판 열쇠가 없습니다. 패드에 거는 주소는 ' +
+                       'board/#tv=열쇠&at=사무실 모양입니다. 운영본부에 문의하세요.'));
+        return;
+      }
       // 우리 주소에서 연 현황판. 웹앱의 JSON 입구를 일반 요청으로 부른다.
       // 머리줄을 더하지 않은 GET 이라 브라우저가 사전 확인 없이 바로 보낸다.
       fetch(DATA_URL + '?tvdata=' + encodeURIComponent(KEY) + '&at=' + encodeURIComponent(AT),
             { cache: 'no-store' })
         .then(function (r) { return r.json(); })
-        .then(got, fail);
+        .then(got, function () {
+          // 연결이 끊겼거나 서버가 JSON 이 아닌 것을 줬다. 브라우저의 영어 문구 대신.
+          fail(new Error('예약 현황을 받지 못했습니다. 인터넷 연결을 확인해 주세요.'));
+        });
       return;
     }
     google.script.run.withSuccessHandler(got).withFailureHandler(fail).api_roomBoard(KEY, AT);
