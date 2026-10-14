@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>상담실 예약현황</title>
+<!--
+  층마다 걸린 모니터 전용 화면.
+
+  ── 왜 포털 화면을 재활용하지 않는가
+  이 화면은 멀리서 서서 보고, 아무도 조작하지 않는다. 글자가 크고 항목이 적어야
+  한다. 포털 화면을 그대로 띄우면 메뉴·검색창·로그인 안내가 자리를 다 먹는다.
+
+  ── 켜 두고 잊는 화면이다
+  아무도 새로고침을 눌러주지 않는다. 15초마다 스스로 다시 읽고, 못 읽으면
+  마지막에 읽은 것을 그대로 두되 언제 읽은 것인지 표시한다. 오래된 값을
+  최신인 척 보여주는 것이 이 화면에서 할 수 있는 가장 나쁜 일이다.
+  날짜가 바뀌면 자정에 저절로 넘어간다 — 서버가 매번 '오늘' 을 다시 계산한다.
+-->
+<style>
+  /*
+   * ── 글자 크기를 vh 가 아니라 vmin 으로 잡는다
+   * 이 화면은 세로로 세운 모니터에 걸린다. vh 로 잡으면 세로 화면(1080×1920)에서
+   * 기준이 1920 이 되어 글자가 화면 폭을 넘어간다 — 실제로 제목이 두 줄로
+   * 접히고 「지금」 배지가 카드 밖으로 잘렸다. vmin 은 짧은 변을 본다. 세로로
+   * 세우든 눕히든 같은 크기가 나온다.
+   */
+  /*
+   * ── 왜 흰 바탕인가
+   * 로비 조명이 밝다. 어두운 바탕은 그 빛을 반사해 화면이 거울이 되고, 글자가
+   * 반사 위에 겹쳐 읽히지 않는다. 흰 바탕은 종이처럼 보이고 반사에 덜 먹힌다.
+   *
+   * 색은 포털과 같은 홈루덴스 팔레트에서 가져온다. 다만 브랜드 원색을 글자에
+   * 그대로 쓰지 않는다 — Golden Sand 를 흰 바탕에 올리면 대비가 1.7:1 이라
+   * 멀리서 아예 안 보인다. 넓은 면에는 원색을, 글자에는 어둡게 조정한 값을 쓴다.
+   */
+  :root {
+    --bg: #f2efec;          /* White Sand 를 살짝 낮춘 바탕. 카드가 떠 보이게 */
+    --card: #ffffff;
+    --line: #e3ded9;
+    --text: #46413a;        /* Deep Espresso */
+    --muted: #7b7166;       /* Taupe Brown 을 글자용으로 어둡게 */
+    --done: #8d8177;        /* 지난 예약. Taupe 원색(#a69a8f)은 흰 바탕에서 2.4:1 이라
+                               멀리서 안 보였다. 눈에 먼저 안 들어오되 읽히는 선까지만 */
+    --now: #4d6639;         /* Olive Moss 를 글자용으로 어둡게 (흰 바탕 5.5:1) */
+    --now-bg: #eef2e8;
+    --accent: #5b0f11;      /* Deep Burgundy — 날짜처럼 하나뿐인 값에만 */
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+    padding: 2.5vmin 3vmin; min-height: 100vh;
+    /* 방 카드가 남은 높이를 나눠 갖게 한다. 세로 화면에서 아래 절반이
+       비어 있으면 멀리서 볼 때 화면이 꺼진 것처럼 보인다. */
+    display: flex; flex-direction: column;
+  }
+  header { display: flex; align-items: baseline; gap: 2.5vmin; margin-bottom: 2.5vmin; }
+  h1 { font-size: 3.6vmin; margin: 0; letter-spacing: -.01em; }
+  .date { font-size: 3vmin; color: var(--accent); font-weight: 700; white-space: nowrap; }
+  .clock { margin-left: auto; font-size: 3vmin; color: var(--muted); white-space: nowrap; }
+
+  .rooms { display: grid; gap: 2vmin; flex: 1; align-content: stretch;
+           grid-template-columns: repeat(auto-fit, minmax(38vmin, 1fr)); }
+  /* 세로 화면에서는 한 줄에 하나씩 쌓고 높이를 고르게 나눈다. 가로로 두 개씩
+     늘어놓으면 방이 셋일 때 마지막 한 칸이 홀로 남아 어긋나 보인다. */
+  @media (orientation: portrait) {
+    /* 카드 높이를 고르게 나눠 화면을 채운다. 내용에 맞춰 카드를 줄이고 카드
+       사이를 벌리는 것도 해 봤는데, 예약이 한 건인 방과 세 건인 방 사이가
+       400px 씩 벌어져 표가 아니라 흩어진 상자로 보였다. */
+    .rooms { grid-template-columns: 1fr; grid-auto-rows: 1fr; }
+  }
+
+  .room { background: var(--card); border: 1px solid var(--line);
+          border-radius: 1.4vmin; padding: 2.2vmin 2.4vmin;
+          display: flex; flex-direction: column;
+          /* 흰 바탕에 흰 카드라 테두리만으로는 경계가 약하다. 그림자로 띄운다. */
+          box-shadow: 0 .2vmin .8vmin rgba(70, 65, 58, .07); }
+  /* 예약 줄은 카드 위쪽에 붙인다. 카드 높이에 맞춰 벌리면 한 건짜리 방에서
+     그 한 줄이 허공에 뜬다 — 방 이름과 예약이 멀어져 짝이 안 보인다.
+     남는 높이는 카드 사이를 벌리는 데 쓴다(.rooms 의 align-content). */
+  .room .list { display: flex; flex-direction: column; }
+  .room h2 { font-size: 3.2vmin; margin: 0 0 .8vmin; }
+  .room .note { font-size: 2.2vmin; color: var(--muted); margin: 0 0 1.6vmin; }
+
+  /* 한 줄에 안 들어가면 내용이 아랫줄로 내려간다. 욱여넣고 잘라 버리면
+     「나지균_박고객 …」 이 되어, 무엇이 잘렸는지 아무도 모른다. */
+  .slot { display: flex; align-items: baseline; gap: 1.6vmin; padding: 1.4vmin 0;
+          border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .slot .t { font-size: 2.8vmin; font-weight: 700;
+             font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* 「담당자_상담내용」. 이 화면을 보는 이유가 이 칸이라 시각 다음으로 크게 둔다. */
+  .slot .what { font-size: 2.5vmin; flex: 1 1 auto; min-width: 0; }
+  /* 배지는 제 요소로 둔다. 시각 뒤에 ::after 로 붙였더니 시각이 nowrap 이라
+     카드 밖으로 잘려 나갔다 — 「지」 한 글자만 보였다. */
+  .slot .now-tag { display: none; font-size: 2vmin; font-weight: 700;
+                   border: 1px solid currentColor; border-radius: 999px;
+                   padding: .2vmin 1.2vmin; white-space: nowrap; }
+  /* 지금 쓰는 방은 색만으로 알리지 않는다. 띠를 깔아 줄 자체를 도드라지게
+     한다 — 멀리서는 글자색 차이보다 면의 차이가 먼저 보인다. */
+  .slot.now { color: var(--now); background: var(--now-bg);
+              margin: 0 -1.2vmin; padding-left: 1.2vmin; padding-right: 1.2vmin;
+              border-radius: .8vmin; border-top-color: transparent; }
+  .slot.now .what { color: var(--now); }
+  .slot.now .now-tag { display: inline-block; }
+  .slot.done { color: var(--done); }
+  .slot.done .what { color: var(--done); }
+
+  .empty { color: var(--now); font-size: 2.5vmin; padding: 1.4vmin 0;
+           border-top: 1px solid var(--line); }
+  footer { margin-top: 2.5vmin; font-size: 2vmin; color: var(--muted); }
+  /* 값을 못 읽었을 때만 켠다. 켜져 있지 않으면 화면의 값은 방금 읽은 것이다. */
+  /* span 으로 한정한다. 그냥 .stale 로 두었더니 body 에 붙인 같은 이름에도 걸려서,
+     읽기가 한 번 실패하면 화면 전체가 하얗게 사라졌다(2026-10-14에 잡았다). */
+  span.stale { display: none; color: var(--accent); font-weight: 700; }
+  body.stale span.stale { display: inline; }
+  /* 이 기기에 적어 둔 것을 먼저 그렸을 때만 켠다. 서버 답이 오면 꺼진다. */
+  span.reading { display: none; color: var(--muted); font-weight: 700; }
+  body.reading span.reading { display: inline; }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="where">상담실 예약현황</h1>
+    <span class="date" id="date"></span>
+    <span class="clock" id="clock"></span>
+  </header>
+
+  <div class="rooms" id="rooms"></div>
+
+  <footer>
+    홈루덴스 업무지원 포털 · 예약은 포털 「상담실 예약」 에서 합니다
+    <span class="stale"> · 연결이 끊겨 <b id="stale-at"></b> 기준입니다</span>
+    <span class="reading"> · 새로 읽는 중…</span>
+  </footer>
+
+<script>
+  /*
+   * 이 화면은 두 길로 나간다. 웹앱(?tv=)으로 열면 서버가 아래 세 값을 심어 주고
+   * google.script.run 으로 다시 읽는다. 우리 주소(portal.homeludens.co.kr/board/)
+   * 로 나갈 때는 tools/build_pwa.sh 가 BEGIN~END 사이를 갈아 끼워, 열쇠와 자리를
+   * 주소에서 읽고 웹앱의 ?tvdata= 에서 JSON 을 받게 한다(2026-10-14).
+   * 화면 원본은 이 한 벌이다 — 두 벌이면 언젠가 한쪽만 고쳐진다.
+   */
+  /*BOARD-SOURCE-BEGIN*/
+  // 우리 주소에서 연 현황판(tools/build_pwa.sh 가 넣었다). 열쇠와 자리는 주소의
+  // # 뒤에서 읽는다. ? 뒤에 적어도 받는다.
+  var Q = new URLSearchParams((location.hash || '').replace(/^#/, '') ||
+                              (location.search || '').replace(/^\?/, ''));
+  var KEY = Q.get('tv') || '';
+  var AT  = Q.get('at') || '';
+  var FIRST = null;
+  var DATA_URL = 'https://script.google.com/macros/s/AKfycby8G1Pd0NGBf1LyD7J3o3B6gUJqkIsVhM4crKOWYBD51gHVUHYwMZ8vNbZgwXGYV7pvvQ/exec';
+  /*BOARD-SOURCE-END*/
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function draw(d) {
+    document.getElementById('date').textContent = d.dateLabel;
+    // 한 사무실만 띄우는 화면이면 사무실 이름을 머리에 올린다. 그러면 방 이름
+    // 카드마다 「목동 3211호」 를 세 번 반복하지 않아도 된다.
+    document.getElementById('where').textContent =
+      d.at ? d.at + ' 상담실 예약현황' : '상담실 예약현황';
+    document.getElementById('rooms').innerHTML = d.rooms.map(function (r) {
+      var body = r.bookings.length
+        ? r.bookings.map(function (b) {
+            return '<div class="slot ' + b.state + '">' +
+                   '<span class="t">' + esc(b.startLabel) + ' ~ ' + esc(b.endLabel) + '</span>' +
+                   '<span class="now-tag">지금</span>' +
+                   '<span class="what">' + esc(b.what || b.by) + '</span></div>';
+          }).join('')
+        : '<div class="empty">오늘 예약 없음</div>';
+      // 사무실 이름이 머리표에 이미 있다. 방 이름에서 그만큼은 덜어 낸다.
+      var name = d.at && r.id.indexOf(d.at) === 0 ? r.id.slice(d.at.length).trim() || r.id : r.id;
+      return '<section class="room"><h2>' + esc(name) + '</h2>' +
+             (r.note ? '<p class="note">' + esc(r.note) + '</p>' : '') +
+             '<div class="list">' + body + '</div></section>';
+    }).join('');
+  }
+
+  function tick() {
+    var n = new Date();
+    document.getElementById('clock').textContent =
+      (n.getHours() < 12 ? '오전 ' : '오후 ') +
+      (n.getHours() % 12 === 0 ? 12 : n.getHours() % 12) + ':' +
+      ('0' + n.getMinutes()).slice(-2);
+  }
+
+  /* 첫 시도가 실패하면 보여줄 것이 없다. 그때만 사유를 적는다. 그 뒤로는
+     마지막에 읽은 것을 그대로 두되 언제 읽은 것인지 표시한다. */
+  function fail(e) {
+    if (!document.getElementById('rooms').innerHTML) {
+      document.getElementById('rooms').textContent = e && e.message ? e.message : '불러오지 못했습니다.';
+      return;
+    }
+    document.getElementById('stale-at').textContent =
+      document.getElementById('clock').textContent;
+    document.body.classList.remove('reading');
+    document.body.classList.add('stale');
+  }
+
+  /*
+   * 서버 응답은 guard_ 가 { ok, data } 로 감싸서 준다. 포털 화면은 run()
+   * 에서 이걸 벗기는데, 이 화면은 서버를 직접 부르므로 여기서 벗겨야 한다.
+   * 안 벗기면 draw() 가 빈 객체를 받아 아무것도 그리지 않는다 — 화면은
+   * 머리글만 뜨고 방 칸이 비어 있게 된다.
+   */
+  function got(res) {
+    if (res && res.ok === false) { fail(new Error(res.error || '불러오지 못했습니다.')); return; }
+    var d = (res && res.ok) ? res.data : res;
+    if (!d || !d.rooms) { fail(new Error('응답을 알아볼 수 없습니다.')); return; }
+    document.body.classList.remove('stale');
+    document.body.classList.remove('reading');
+    draw(d);
+    remember(d);
+  }
+
+  function load() {
+    if (DATA_URL) {
+      // 우리 주소에서 연 현황판. 웹앱의 JSON 입구를 일반 요청으로 부른다.
+      // 머리줄을 더하지 않은 GET 이라 브라우저가 사전 확인 없이 바로 보낸다.
+      fetch(DATA_URL + '?tvdata=' + encodeURIComponent(KEY) + '&at=' + encodeURIComponent(AT),
+            { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(got, fail);
+      return;
+    }
+    google.script.run.withSuccessHandler(got).withFailureHandler(fail).api_roomBoard(KEY, AT);
+  }
+
+  /*
+   * 마지막으로 받은 오늘 현황을 이 기기에 적어 둔다. 패드를 다시 켜거나 Fully 가
+   * 페이지를 다시 열 때, 서버 답을 기다리는 1~2초 동안 빈 판 대신 이것을 먼저
+   * 그린다. 다만 그동안은 「새로 읽는 중」 을 띄운다 — 오래된 값을 최신인 척
+   * 보여주지 않는다는 이 화면의 원칙 그대로다. 날짜가 다르면 쓰지 않는다.
+   * 열쇠는 적지 않는다. 저장소가 막혀 있으면(사생활 보호 모드) 그냥 건너뛴다.
+   */
+  var SAVED = 'roomboard:' + AT;
+  function ymdNow() {
+    var n = new Date();
+    return n.getFullYear() + '-' + ('0' + (n.getMonth() + 1)).slice(-2) + '-' + ('0' + n.getDate()).slice(-2);
+  }
+  function remember(d) {
+    try { localStorage.setItem(SAVED, JSON.stringify(d)); } catch (e) {}
+  }
+  function recall() {
+    try {
+      var d = JSON.parse(localStorage.getItem(SAVED) || 'null');
+      return d && d.rooms && d.date === ymdNow() ? d : null;
+    } catch (e) { return null; }
+  }
+
+  /*
+   * 다시 읽는 주기. 60초였을 때 포털에서 잡은 예약이 모니터에 1분 넘게 안 떠서
+   * 「느리다」 는 말이 나왔다(2026-10-14). 서버가 오늘 예약을 기억해 두고 예약이
+   * 바뀔 때만 시트를 다시 읽으므로(RoomBoard.gs 의 boardDayRows_), 자주 물어도
+   * 시트에는 거의 가지 않는다.
+   */
+  var REFRESH_SEC = 15;
+
+  tick();
+  if (FIRST && FIRST.rooms) { draw(FIRST); remember(FIRST); }
+  else {
+    var before = recall();
+    if (before) { draw(before); document.body.classList.add('reading'); }
+    load();
+  }
+  setInterval(tick, 20 * 1000);
+  setInterval(load, REFRESH_SEC * 1000);
+</script>
+</body>
+</html>
