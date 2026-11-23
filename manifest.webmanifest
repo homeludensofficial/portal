@@ -1,7 +1,7 @@
 {
   "name": "홈루덴스 업무포털",
   "short_name": "홈루덴스 업무포털",
-  "description": "홈루덴스 직원용 업무지원 포털",
+  "description": "홈루덴스 직원용 업무지원포털",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
