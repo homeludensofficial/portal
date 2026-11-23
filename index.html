@@ -97,6 +97,31 @@
   #wait[hidden] { display: none; }
 
   /*
+    지난번에 본 홈(2026-11-24). 포털이 뜨기 전 4~5초 동안 「여는 중」 대신 보인다.
+    액자와 같은 자리(안전영역 안)에 겹쳐 그리고, 포털이 다 그렸다고 알려 오면 걷는다.
+    #wait 와 같은 이유로 반드시 걷혀야 한다 — 걷는 길은 hideWait 하나다.
+  */
+  #snap {
+    /* 액자는 top·bottom 만으로는 늘어나지 않는다(300×150 으로 남는다). 크기를 적고
+       안전영역은 padding 으로 비운다. */
+    position: fixed; z-index: 5; border: 0; top: 0; left: 0;
+    width: 100%; height: 100%; box-sizing: border-box;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: #f7f5f3;
+  }
+  /* 지난 화면이라는 것을 알린다. 옛 숫자를 지금 것으로 믿지 않게. */
+  #snap-pill {
+    position: fixed; z-index: 6; left: 50%; transform: translateX(-50%);
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    padding: 7px 14px; border-radius: 999px; white-space: nowrap;
+    background: rgba(43,38,34,.86); color: #fff;
+    font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    pointer-events: none;
+  }
+  #snap[hidden], #snap-pill[hidden] { display: none; }
+
+  /*
     알림 허락을 받는 아래쪽 판. 포털(액자 안)에서 「저장」 을 누르면 뜬다.
     아이폰은 이 페이지에서 사람이 직접 누른 단추로만 허락 창을 열어 주므로,
     한 번 더 누르게 하는 수밖에 없다.
@@ -121,6 +146,8 @@
   @media (prefers-color-scheme: dark) {
     html, body { background: #211f1c; }
     #wait { background: #211f1c; color: #a69a8f; }
+    #snap { background: #211f1c; }
+    #snap-pill { background: rgba(238,230,221,.9); color: #211f1c; }
     #wait img { filter: invert(1); }
     #ask { background: #2a2724; color: #eee6dd; border-top-color: #3a3530; }
     #ask button { border-color: #4a443d; }
@@ -133,6 +160,12 @@
 <div id="wait"><div><img src="symbol-mono.png" alt=""><br>포털을 여는 중…</div></div>
 <iframe id="portal" title="홈루덴스 업무포털"
         allow="clipboard-write; downloads"></iframe>
+<!--
+  sandbox 에 allow-scripts 가 없다 — 그림 안의 onclick 은 돌지 않는다.
+  allow-same-origin 은 껍데기가 누른 칸을 읽으려고 둔다.
+-->
+<iframe id="snap" hidden title="지난번 홈" sandbox="allow-same-origin" aria-hidden="true"></iframe>
+<div id="snap-pill" hidden>최신 내용을 불러오는 중…</div>
 <div id="ask" hidden role="dialog" aria-label="알림 허용">
   <p><b>상담실 예약 알림</b><br>새 예약을 이 폰으로 받으려면 알림을 허용해 주세요.</p>
   <div class="btns"><button id="ask-no">나중에</button><button id="ask-go" class="go">허용</button></div>
@@ -171,9 +204,14 @@
    */
   var loaded = false;
   var loadedAt = 0;
+  var done = false;
+  var readyFrom = null;   // 「다 그렸다」 를 보낸 포털 창 — 누른 칸을 그리로 알린다
+  var snapShownAt = 0;
   function hideWait() {
-    if (wait.hidden) return;
+    if (done) return;
+    done = true;
     wait.hidden = true;
+    hideSnap();
     showTiming();
   }
   frame.addEventListener('load', function () {
@@ -198,16 +236,19 @@
       'z-index:9;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.75);color:#fff;' +
       'font:13px/1.4 -apple-system,sans-serif';
     box.textContent = '홈까지 ' + (now / 1000).toFixed(1) + '초 · 페이지 도착 ' +
-      (loadedAt / 1000).toFixed(1) + '초';
+      (loadedAt / 1000).toFixed(1) + '초' +
+      (snapShownAt ? ' · 지난 홈 ' + (snapShownAt / 1000).toFixed(1) + '초' : '');
     document.body.appendChild(box);
   }
 
   // 액자가 끝내 안 뜨는 경우(신호가 끊겼거나 구글이 막았거나)에는 무슨 일인지
   // 적어 준다. 「여는 중…」 이 영영 떠 있으면 무엇이 잘못됐는지조차 알 수 없다.
   setTimeout(function () {
-    if (wait.hidden || loaded) return;
+    if (done || loaded) return;
     wait.querySelector('div').innerHTML =
       '포털을 열지 못했습니다.<br>신호를 확인하고 다시 열어 주세요.';
+    // 지난 홈을 보여 주는 중이면 그 위의 알림 줄이 같은 말을 한다.
+    pill.textContent = '최신 내용을 받지 못했습니다. 신호를 확인해 주세요.';
   }, 20000);
 
   /*
@@ -238,6 +279,106 @@
   frame.src = EXEC + (qs ? qs + '&app=1' : '?app=1');
 
   /*
+   * 지난번 홈 먼저 보여 주기(2026-11-24).
+   *
+   * 다른 사내 앱(정산·클레임·AS)은 누르자마자 뜨는데 이 포털만 4~5초 「여는 중」
+   * 이었다. 그 시간은 Apps Script 가 깨어나 시트를 읽는 시간이라 껍데기에서는
+   * 줄일 수 없다(2026-10-07 에 껍데기를 바꿔 보고 확인했다). 그래서 줄이지 않고
+   * 가린다 — 포털이 지난번에 그린 홈을 맡겨 두고(Script.html 의 tellShellSnapshot),
+   * 다음에 열 때 그것을 먼저 그린다. 현황판이 쓰는 방식과 같다.
+   *
+   * ── 보여 주지 않는 때
+   *   - 주소로 로그인 값이 들어왔을 때(q): 다른 사람으로 들어오는 중일 수 있다.
+   *   - 맡겨 둔 홈이 지금 들고 있는 세션과 다른 사람 것일 때.
+   *   - 14일이 지났을 때: 그만큼 안 연 사람에게 옛 메뉴를 보여 주지 않는다.
+   *
+   * ── 누르면
+   * 그림은 스크립트가 돌지 않는 액자 안에 있어서 아무것도 일어나지 않는다. 그래서
+   * 누른 칸을 기억했다가 포털이 뜨면 그리로 보낸다(homeludens-go). 검색창은 막는다 —
+   * 친 글자가 포털이 뜨는 순간 사라진다.
+   */
+  var SNAP_KEY = 'homeludens.snapshot';
+  var SNAP_MAX_AGE = 14 * 24 * 3600 * 1000;
+  var snap = document.getElementById('snap');
+  var pill = document.getElementById('snap-pill');
+  var pendingGo = '';
+
+  // 누구의 홈인지 — 세션 토큰이 있으면 그것, 회사 구글 계정으로 들어오는 사람은 'g'.
+  function snapOwner() {
+    var t = '';
+    try { t = localStorage.getItem(KEY) || ''; } catch (e) {}
+    return t || 'g';
+  }
+
+  function attr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  function showSnap() {
+    if (q) return;
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null'); } catch (e) {}
+    if (!s || typeof s.css !== 'string' || typeof s.body !== 'string') return;
+    if (s.who !== snapOwner() || !(Date.now() - s.at < SNAP_MAX_AGE)) return;
+
+    snap.addEventListener('load', function () {
+      var doc = snap.contentDocument;
+      if (!doc) return;
+      var box = doc.getElementById('search');
+      if (box) box.setAttribute('readonly', '');
+      doc.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        // 포털이 칸마다 갈 곳을 data-go(바로가기)·data-id(메뉴)로 적어 보낸다.
+        var el = ev.target.closest && ev.target.closest('[data-go],[data-id]');
+        if (!el) return;
+        var id = el.getAttribute('data-go') || el.getAttribute('data-id') || '';
+        if (!/^[a-z0-9_-]+$/.test(id) || id === 'more') return;
+        pendingGo = id;
+        pill.textContent = '여는 중… 곧 그 화면으로 넘어갑니다';
+      }, true);
+    }, { once: true });
+
+    snap.srcdoc = '<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<style>' + s.css + '</style></head>' +
+      '<body class="' + attr(s.bodyClass || '') + '">' + s.body + '</body></html>';
+    snap.hidden = false;
+    pill.hidden = false;
+    wait.hidden = true;
+    snapShownAt = performance.now();
+  }
+
+  function hideSnap() {
+    if (pendingGo && readyFrom) {
+      try {
+        readyFrom.source.postMessage({ type: 'homeludens-go', id: pendingGo }, readyFrom.origin);
+      } catch (e) {}
+    }
+    pendingGo = '';
+    snap.hidden = true;
+    pill.hidden = true;
+    snap.removeAttribute('srcdoc');
+  }
+
+  function saveSnap(d) {
+    if (typeof d.css !== 'string' || typeof d.body !== 'string') return;
+    // 포털 화면 하나(스타일 포함)는 150KB 안팎이다. 터무니없이 크면 받지 않는다.
+    if (d.css.length + d.body.length > 1500000) return;
+    try {
+      localStorage.setItem(SNAP_KEY, JSON.stringify({
+        at: Date.now(), who: snapOwner(),
+        css: d.css, body: d.body, bodyClass: String(d.bodyClass || '')
+      }));
+    } catch (e) { /* 저장소가 꽉 찼거나 막혔으면 다음에도 「여는 중」 일 뿐이다 */ }
+  }
+
+  function clearSnap() {
+    try { localStorage.removeItem(SNAP_KEY); } catch (e) {}
+  }
+
+  showSnap();
+
+  /*
    * 포털이 로그인 상태를 알려 준다. 빈 값이면 그 세션이 죽었다는 뜻이라 지운다.
    *
    * 보낸 곳이 우리 포털인지 확인한다 — 액자 안에 다른 페이지가 들어와
@@ -262,7 +403,9 @@
     if (!fromPortal(ev.origin)) return;
     var d = ev.data;
     if (!d) return;
-    if (d.type === 'homeludens-ready') return hideWait();
+    if (d.type === 'homeludens-ready') { readyFrom = ev; return hideWait(); }
+    if (d.type === 'homeludens-snapshot') return saveSnap(d);
+    if (d.type === 'homeludens-snapshot-clear') return clearSnap();
     if (d.type === 'homeludens-push-hello') return pushReply(ev);
     if (d.type === 'homeludens-push-ask') return pushAsk(ev, d.key);
     if (d.type !== 'homeludens-session') return;
